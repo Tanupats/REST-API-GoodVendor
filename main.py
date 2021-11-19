@@ -59,7 +59,7 @@ def Adduser():
         lastname=request.json["lastname"]
         phoneNumber=request.json["numberphone"]
         if(db.Users.find_one({'numberphone':phoneNumber})):
-            return {"messages":"phoneNumber has registered"}
+            return {"messages":"phoneNumber has registered","status":False}
         else:        
             result=db.Users.insert_one({"email":email,
             "password":password,
@@ -67,7 +67,7 @@ def Adduser():
             "lastname":lastname,
             "numberphone":phoneNumber})
             if(result):
-                return {"messages":"Successful registration"}
+                return {"messages":"Successful registration","status":True}
       
 #login 
 @app.route('/Login',methods=['POST'])
@@ -181,6 +181,7 @@ def getstoreData(storeid):
     result=db.store.find_one({'store_ID':storeid})
     return result
 
+
 #get orders for web from user 
 @app.route('/getorder/<string:userid>',methods=['GET'])
 def getorder(userid):
@@ -195,7 +196,8 @@ def getorder(userid):
         {
             'bill_id':x['bill_id'],
             'storename': str(storedata['storename']),
-            'store_img':storedata['store_img']
+            'store_img':storedata['store_img'],
+            'status_order':'ยืนยันคำสั่งซื้อ'
          })
 
     #print(orders)
@@ -212,7 +214,8 @@ def getorderDetail(bill_id):
     for x in result_order:
         orders.append({'orderList':x['order_products'],"status_order":x['status_order']})
     #print(orders) 
-    return {"meesage":"getorder detail success","orders":orders}
+    return {"meesage":"getorder detail success","orders":orders,'bill_id':bill_id}
+
 
 
 #get order tracking for web status order success by user 
@@ -233,7 +236,6 @@ def getorderTcaking(userid):
         })     
     return {"meesage":"getorder tracking success","orders":ordersTrace}
 
-
 #post store 
 @app.route('/poststore',methods=['POST'])
 def postStore():
@@ -252,7 +254,6 @@ def postStore():
          "long":longs})
     if(result):
         return {"message":"add store ","status":True}
-
 
 
 #get store 
@@ -310,7 +311,6 @@ def updateStatusOrder(bill_id):
         return {"message":"update status success"}
 
 
-
 #post customer contact
 @app.route('/postcustomerContact',methods=['POST'])
 def postcustomerContact():
@@ -341,6 +341,10 @@ def getContactUser(userid):
     return {"status":True,"message":"getContactUser Success for user id : "+userid,"usercontact":output}
 
 
+def GetuserData(userid):
+    result=db.Users.find({'userid':userid})
+    return result
+
 #get order for mobileApplication by vender 
 @app.route('/GetorderStore/<string:store_ID>',methods=['GET'])
 def GetorderStore(store_ID):
@@ -348,18 +352,16 @@ def GetorderStore(store_ID):
     results=db.orders.find({'store_ID':store_ID})
     if(results):
         for x in results:
+            #userid=x['userid']
             orderStore.append({
                 'bill_id':x['bill_id'],
                 'orderTime':str(x['orderTime']),
                 'order_products': x['order_products'],
                 'Pickup_time':x['Pickup_time'],
-                'note':x['note']     
-                })
-            #print(list(orderStore))
+                'note':x['note'],
+                'userid':x['userid'],        
+                })    
         return {"GetorderStore":"success","ordersStore":orderStore}
-
-
-
 
 
 if __name__ == '__main__':
