@@ -298,17 +298,16 @@ def createLink():
 
 
 #put status order  for mobile application 
-@app.route('/updateStatusOrder/<string:bill_id>',methods=['PUT'])
-def updateStatusOrder(bill_id):
-    billid=bill_id
-    result=db.orders.update({"status_order.status":"ยืนยันคำสั่งซื้อ","bill_id":billid},{   
+@app.route('/updateStatusOrder/<string:_id>',methods=['PUT'])
+def updateStatusOrder(_id):
+    db.orders.update_one({"_id":ObjectId(_id),"status_order.status":"ยืนยันคำสั่งซื้อ"},{   
             "$set":{        
-                "check":True,                     
-            }      
-    })
-
-    if(result):
-        return {"message":"update status success"}
+                "check":True,
+                
+                }
+                })
+ 
+    return {"message":"update status success"}
 
 
 #post customer contact
@@ -317,22 +316,18 @@ def postcustomerContact():
     userid=request.json["userid"]
     latitude=request.json["latitude"]
     longitude=request.json["longitude"]
-    adress=request.json["adress"]
-    userResult=db.customer_contract.find({'userid':userid})
-    if(userResult):
-        return {"status":False,"message":"CustomerContact Exit for user id : "+userid}        
-    else:
-        result=db.customer_contract.insert_one({'userid':userid,'latitude':latitude,'longitude':longitude,'adress':adress})
-        if(result):
-            return  {"status":True,"message":"postCustomerContact Success for user id : "}
+    adress=request.json["adress"] 
+    result=db.customer_contract.insert_one({'userid':userid,'latitude':latitude,'longitude':longitude,'adress':adress})
+    if(result):
+        return  {"status":True,"message":"postCustomerContact Success for user id : "}
 
 
 #get customer contract 
 @app.route('/getcustomerContact/<string:userid>',methods=['GET'])
 def getContactUser(userid):
     output=[]
-    result=db.customer_contact.find_one({'userid':userid})
-    output.append({'userid':str(result['_id']),
+    result=db.customer_contract.find_one({'userid':userid})
+    output.append({'userid':str(result['userid']),
                    'adress':result['adress'],
                    'latitude':result['latitude'],
                    'longitude':result['longitude']
@@ -341,27 +336,69 @@ def getContactUser(userid):
     return {"status":True,"message":"getContactUser Success for user id : "+userid,"usercontact":output}
 
 
-def GetuserData(userid):
-    result=db.Users.find({'userid':userid})
-    return result
+def GetuserData(_id):
+    userinfo=db.Users.find({'_id':ObjectId(_id)})
+    contactuser=db.customer_contract.find({'userid':_id})
+    name=''
+    numberphone=''
+    address=''
+    lat=''
+    lang=''
+    #outputuser=[]
+    for x in userinfo:
+        name=x['name']+" "+x['lastname']
+        numberphone=x['numberphone']
+    for a in contactuser:
+        address=a['adress']
+        lat=a['latitude']
+        lang=a['longitude']
+    #print(name,numberphone,address,lat,lang)
+    return {'name':name,'numberphone':numberphone,'adress':address,'lat':lat,'lang':lang}
+
+
+#function get data products 
+def getProductList(productList):
+    finalpro=''
+    for n in productList:
+            finalpro+='\n'+n['product_name']+" "+str(n['number'])+ " กิโลกรัม"
+    return(finalpro)
+
 
 #get order for mobileApplication by vender 
 @app.route('/GetorderStore/<string:store_ID>',methods=['GET'])
 def GetorderStore(store_ID):
     orderStore=[]
     results=db.orders.find({'store_ID':store_ID})
+    productList=''
+  
     if(results):
-        for x in results:
-            #userid=x['userid']
+        for x in results:      
+            productList=x['order_products']
             orderStore.append({
                 'bill_id':x['bill_id'],
-                'orderTime':str(x['orderTime']),
-                'order_products': x['order_products'],
                 'Pickup_time':x['Pickup_time'],
-                'note':x['note'],
-                'userid':x['userid'],        
-                })    
+                'note':x['note'],               
+                'name':GetuserData(x['userid'])['name'],
+                'numberphone':GetuserData(x['userid'])['numberphone'],
+                'adress':GetuserData(x['userid'])['adress'],
+                'products':getProductList(productList)       
+                }) 
+        #print(productList)
+        #print(getProductList(productList))         
         return {"GetorderStore":"success","ordersStore":orderStore}
+
+
+
+
+
+
+
+
+
+#usercon=GetuserData("617b9187bf401941f689bcc5")
+#print(usercon['name'])
+
+
 
 
 if __name__ == '__main__':
