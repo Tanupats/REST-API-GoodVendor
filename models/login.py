@@ -11,6 +11,15 @@ def genotp():
     print(OTP)    
     return OTP
 
+#get bill number 
+def genBill():    
+    bill = "0123456789"
+    BILL = ""
+    for i in range(4) :
+        BILL += bill[math.floor(random.random() * 10)]
+    return BILL
+
+
 #function save phonenumber and OTP 
 def addNumberPhoneUser(phonenumber,otp):
     db.OTP.insert_one({'numberphone':phonenumber,'otp':otp})
