@@ -30,9 +30,9 @@ def LoginOTP() :
     numberphone=request.json["numberphone"]  
     otp=genotp()
     account_sid = "AC972c43f1b33f1b1fdf504a65febf75a4"
-    auth_token = "5fe3d1f49f448a54d1b4a90a4bc00b08"
+    auth_token = "5e9c5bcb53f4f7189a7f835a5adc9e3d"
     client = Client(account_sid, auth_token)
-    client.api.account.messages.create(to="+66"+numberphone,from_="+13868537656",body="Your OTP : "+str(otp))
+    client.api.account.messages.create(to="+66"+numberphone,from_="+13868537656",body="GV-OTP : "+str(otp))
     addNumberPhoneUser(numberphone,otp)
     return {"message":"please check OTP SentTo Your mobilephone +66"+numberphone}
 
@@ -50,7 +50,7 @@ def VerifyOTP():
         return {"message":" please verify your OTP agian!!"}
 
 
-#add user to DB 
+#add user or register  
 @app.route('/Adduser',methods=['POST'])
 def Adduser():
     if request.method == 'POST':
@@ -114,12 +114,6 @@ def Getproduct(store_ID):
     return jsonify(product)
      
 
-
-
-
-
-
-
 #add product from store
 @app.route('/addproduct',methods = ['POST'])
 def Addproduct():
@@ -136,6 +130,22 @@ def Addproduct():
             return {"messags":"Add product success"}
 
 
+#get product from productID 
+@app.route('/getProduct/<string:_id>',methods=['GET'])
+def getProduct(_id):
+    proname=''
+    price=''
+    stock_quantity=''
+    proID=''
+    result=db.product.find({'_id':ObjectId(_id)})  
+    for x in result:    
+        proname=x['proname']
+        price=str(x['price'])
+        stock_quantity=str(x['stock_quantity'])
+        proID=str(x['_id'])      
+    return {"messages":"getProduct Success","id":proID,"proname":proname,"price":price,"stock_quantity":stock_quantity}
+
+
 
 #update data product from store 
 @app.route('/UpdateProduct',methods=['PUT'])
@@ -143,18 +153,17 @@ def Updateproduct():
     productID=request.args.get('product_id')
     proname=request.json["proname"]
     price=request.json["price"]
-    pro_img=request.json["pro_img"]
     prostock=request.json["stock_quantity"]
     result=db.product.update({"_id":ObjectId(productID)} ,{   
             "$set":{        
                 "proname":proname,
                 "price":price,
-                "pro_img":pro_img,
                 "stock_quantity":prostock,              
             }      
     })
     if result:
-        return {"messages":"update prodct success productID is "+productID,"status":True}
+        return {"messages":"update prodct success "+productID,"status":True}
+
 
 
 
@@ -260,27 +269,27 @@ def postStore():
          "lat":lat,
          "long":longs})
     if(result):
-        return {"message":"add store ","status":True}
+        return {"message":"add store your success","status":True}
 
 
 #get Mystore  for mobile Application 
 @app.route('/getstore/<string:userid>',methods=['GET'])
 def getstore(userid):
-    mystore=[]
+    mystore={}
     result=db.store.find({'userid':userid})
     for x in result:
-        mystore.append({"storeID":x['store_ID'],
+        mystore={"storeID":x['store_ID'],
                         "id":str(x['_id']),
                         "storename":x['storename'],
                         "store_img":x['store_img']
-                        })
-    return {"message":"getdate","mystore":mystore}
+                        }
+    return {"message":"getdata mystore success","mystore":mystore}
 
  
 #create_link_store for mobile Application 
 @app.route('/createlink',methods=['POST'])
 def createLink():
-    produt_ID=request.json["produt_ID"]
+    products=request.json["products"]
     store_ID=request.json["store_ID"]
     Date=request.json["Date"]
     Delivery_time=request.json["Delivery_time"]
@@ -288,7 +297,7 @@ def createLink():
     link_expired=request.json["link_expired"]
     result=db.LinkStore.insert_one(
     {   
-        "productid":produt_ID,
+        "products":products,
         "store_ID":store_ID,
         "Date":Date,
         "Delivery_time":Delivery_time,
@@ -300,7 +309,25 @@ def createLink():
 
 
 
-#getproduct from link store 
+#getDataLinkStores for MobileApp
+@app.route('/getDataLinkStores/<string:storeID>',methods=['GET'])
+def getDataLinkStores(storeID):
+    results=db.LinkStore.find({'store_ID':storeID})
+    print(list(results))
+    return {"message":"GetDataLinkStore success"}
+
+
+
+#getproduct from link store for WebApp
+@app.route('/GetProductShop/<string:linkStoreID>',methods=['GET'])
+def GetProductShop(linkStoreID):
+    output=[]
+    result = db.LinkStore.find({'Url_path':linkStoreID})
+    for x in result:
+        output=x['products']
+    #print(list(result))
+    print(output)
+    return {"message":"getProductShop","products":output}
 
 
 
