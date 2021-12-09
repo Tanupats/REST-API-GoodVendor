@@ -203,8 +203,11 @@ def postOrder():
 
 
 def getstoreData(storeid):
-    result=db.store.find_one({'store_ID':storeid})
-    return result
+    output={}
+    result=db.store.find({'store_ID':storeid})
+    for x in result:
+        output={'name':x['storename'],'store_img':x['store_img']}
+    return output
 
 
 #get orders for web from user 
@@ -212,21 +215,18 @@ def getstoreData(storeid):
 def getorder(userid):
     orders=[]
     result_orders=db.orders.find({'userid':userid})
-    storeid={}
-    storedata='' 
+    storeid=""
     for x in result_orders:
         storeid=x['store_ID']
-        storedata=getstoreData(storeid)
+        storename=getstoreData(storeid)['name']
+        storeimg=getstoreData(storeid)['store_img']
         orders.append(
         {
             'bill_id':x['bill_id'],
-            'storename': str(storedata['storename']),
-            'store_img':storedata['store_img'],
+            'storename':storename,
+            'store_img':storeimg,
             'status_order':'ยืนยันคำสั่งซื้อ'
          })
-
-    #print(orders)
-    #print(storeid) 
     return {"meesage":"getorder success","order":orders}
 
 
@@ -255,16 +255,15 @@ def getorderTcaking(userid):
         storeData=getstoreData(storeid)
         ordersTrace.append({
             'bill_id':x['bill_id'],
-            'storename': str(storeData['storename']),
+            'storename': str(storeData['name']),
             'store_img':storeData['store_img'],
             'status_order':'จัดส่งสำเร็จ'
         })     
     return {"meesage":"getorder tracking success","orders":ordersTrace}
 
 
-
 #post store  register for vendor 
-@app.route('/poststore',methods=['POST'])
+@app.route('/Createstore',methods=['POST'])
 def postStore():
     storeID=request.json["store_ID"]
     storename=request.json["storename"]
@@ -303,7 +302,6 @@ def createLink():
     d1 = today.strftime("%d/%m/%Y")
     products=request.json["products"]
     store_ID=request.json["store_ID"]
-    # dd/mm/YY
     Date=d1
     Delivery_time=request.json["Delivery_time"]
     Url_path=store_ID+str(uuid.uuid4()) 
