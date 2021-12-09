@@ -16,12 +16,21 @@ import uuid
 import os
 from werkzeug.utils import secure_filename
 import urllib.request
+from datetime import date
+
 app = Flask(__name__)
 CORS(app) 
 
 @app.route('/')
 def home():
     return {"message":"Hello World REST API"}
+
+
+today = date.today()
+
+
+
+
 
 
 #generate OTP 
@@ -121,10 +130,12 @@ def Addproduct():
         if db.product.find_one({'proname':request.json["proname"]}):
             return {"messags":"product name is Alerdy"}
         else:
+            Price=request.json["price"]
+            quantity=request.json["stock_quantity"]
             db.product.insert_one({'proname':request.json["proname"],
-                                   'price':request.json["price"],
+                                   'price': Price ,
                                    'pro_img':request.json["pro_img"],
-                                   'stock_quantity':request.json["stock_quantity"],
+                                   'stock_quantity':quantity,
                                    'store_ID':request.json["store_ID"]
                                    })
             return {"messags":"Add product success"}
@@ -288,10 +299,12 @@ def getstore(userid):
  
 #create_link_store for mobile Application 
 @app.route('/createlink',methods=['POST'])
-def createLink():
+def createLink():  
+    d1 = today.strftime("%d/%m/%Y")
     products=request.json["products"]
     store_ID=request.json["store_ID"]
-    Date=request.json["Date"]
+    # dd/mm/YY
+    Date=d1
     Delivery_time=request.json["Delivery_time"]
     Url_path=store_ID+str(uuid.uuid4()) 
     link_expired=request.json["link_expired"]
@@ -318,17 +331,27 @@ def getDataLinkStores(storeID):
 
 
 
-#getproduct from link store for WebApp
+#getproduct from link store sale for WebApp
 @app.route('/GetProductShop/<string:linkStoreID>',methods=['GET'])
 def GetProductShop(linkStoreID):
+    products=[]
     output=[]
+    storeID=""
     result = db.LinkStore.find({'Url_path':linkStoreID})
-    for x in result:
-        output=x['products']
-    #print(list(result))
-    print(output)
-    return {"message":"getProductShop","products":output}
+    if result:
+        for x in result:
+            products=x['products']
+            storeID=x['store_ID']
+        for product in products:
+            output.append({ 
+                            "product_id":product["product_id"],
+                            "product_name":product["proname"],
+                            "product_price":product["price"],
+                            "product_img":product["pro_img"],
+                            "number":0})                          
+    return {"products":output,"storeID":storeID}
 
+   
 
 
 
