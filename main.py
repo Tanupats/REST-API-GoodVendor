@@ -29,17 +29,13 @@ def home():
 today = date.today()
 
 
-
-
-
-
 #generate OTP 
 @app.route('/LoginOTP',methods=['POST'])
 def LoginOTP() :    
     numberphone=request.json["numberphone"]  
     otp=genotp()
     account_sid = "AC972c43f1b33f1b1fdf504a65febf75a4"
-    auth_token = "5e9c5bcb53f4f7189a7f835a5adc9e3d"
+    auth_token = "c60e34c09aed4613a298b38642cb0fbb"
     client = Client(account_sid, auth_token)
     client.api.account.messages.create(to="+66"+numberphone,from_="+13868537656",body="GV-OTP : "+str(otp))
     addNumberPhoneUser(numberphone,otp)
@@ -71,15 +67,16 @@ def Adduser():
         if db.Users.find_one({'numberphone':phoneNumber}):
             return {"messages":"phoneNumber has registered","status":False}
         else:        
-            result=db.Users.insert_one({"email":email,
+            result=db.Users.insert_one(
+            {"email":email,
             "password":password,
             "name":name,
             "lastname":lastname,
             "numberphone":phoneNumber})
             if result:
-                return {"messages":"Successful registration","status":True}
+                return {"messages":"Successful registration","status":True,"userid":str(result.inserted_id)}
       
-#login 
+#login for user
 @app.route('/Login',methods=['POST'])
 def Login():
     email=request.json["email"]
@@ -94,7 +91,7 @@ def Login():
                 "lastname":result['lastname']}]         
             }  
     else: 
-        return{ "message":"Login False" }
+        return{ "message":"Login False","status":False }
 
               
 
@@ -119,26 +116,26 @@ def Getproduct(store_ID):
                           "product_name":x["proname"],
                           "product_price":x["price"],
                           "product_img":x["pro_img"],
-                          "number":0})   
+                          "number":x["stock_quantity"]})   
     return jsonify(product)
      
 
 #add product from store
 @app.route('/addproduct',methods = ['POST'])
 def Addproduct():
-    if request.method == 'POST':
-        if db.product.find_one({'proname':request.json["proname"]}):
-            return {"messags":"product name is Alerdy"}
-        else:
-            Price=request.json["price"]
-            quantity=request.json["stock_quantity"]
-            db.product.insert_one({'proname':request.json["proname"],
-                                   'price': Price ,
+    Price=request.json["price"]
+    quantity=request.json["stock_quantity"]
+
+    if db.product.find_one({'proname':request.json["proname"]}):
+        return {"messags":"product name is Alerdy"}
+    else:
+        db.product.insert_one({'proname':request.json["proname"],
+                                   'price': int(Price) ,
                                    'pro_img':request.json["pro_img"],
-                                   'stock_quantity':quantity,
+                                   'stock_quantity':int(quantity),
                                    'store_ID':request.json["store_ID"]
                                    })
-            return {"messags":"Add product success"}
+        return {"messags":"Add product success"}
 
 
 #get product from productID 
@@ -159,21 +156,24 @@ def getProduct(_id):
 
 
 #update data product from store 
-@app.route('/UpdateProduct',methods=['PUT'])
-def Updateproduct():
-    productID=request.args.get('product_id')
+@app.route('/UpdateProduct/<string:proID>',methods=['PUT'])
+def Updateproduct(proID):
+
     proname=request.json["proname"]
     price=request.json["price"]
     prostock=request.json["stock_quantity"]
-    result=db.product.update({"_id":ObjectId(productID)} ,{   
+
+    query={"_id":ObjectId(proID)} 
+    newvalue={   
             "$set":{        
                 "proname":proname,
-                "price":price,
-                "stock_quantity":prostock,              
+                "price":int(price),
+                "stock_quantity":int(prostock),              
             }      
-    })
-    if result:
-        return {"messages":"update prodct success "+productID,"status":True}
+    }
+    result=db.product.update_one(query,newvalue)
+    if(result):
+        return {"messages":"update prodct success ","status":True}
 
 
 
@@ -238,7 +238,6 @@ def getorderDetail(bill_id):
     result_order=db.orders.find({'bill_id':bill_id})
     for x in result_order:
         orders.append({'orderList':x['order_products'],"status_order":x['status_order']})
-    #print(orders) 
     return {"meesage":"getorder detail success","orders":orders,'bill_id':bill_id}
 
 
