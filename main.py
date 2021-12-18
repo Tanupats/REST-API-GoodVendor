@@ -27,17 +27,18 @@ def home():
 
 
 today = date.today()
+d1 = today.strftime("%d/%m/%Y")
 
-
-#generate OTP 
+#Login OTP 
 @app.route('/LoginOTP',methods=['POST'])
 def LoginOTP() :    
     numberphone=request.json["numberphone"]  
     otp=genotp()
     account_sid = "AC972c43f1b33f1b1fdf504a65febf75a4"
-    auth_token = "c60e34c09aed4613a298b38642cb0fbb"
+    auth_token = "34772187d19d17d3a20f1cf17b829099"
+    PHONE_NUMBER="+13868537656"
     client = Client(account_sid, auth_token)
-    client.api.account.messages.create(to="+66"+numberphone,from_="+13868537656",body="GV-OTP : "+str(otp))
+    client.api.account.messages.create(to="+66"+numberphone,from_=PHONE_NUMBER,body="GV-OTP : "+str(otp))
     addNumberPhoneUser(numberphone,otp)
     return {"message":"please check OTP SentTo Your mobilephone +66"+numberphone}
 
@@ -75,13 +76,17 @@ def Adduser():
             "numberphone":phoneNumber})
             if result:
                 return {"messages":"Successful registration","status":True,"userid":str(result.inserted_id)}
-      
-#login for user
+
+
+
+#login for users  get email or numberphone 
 @app.route('/Login',methods=['POST'])
 def Login():
-    email=request.json["email"]
+    username=request.json["email"]
     password=request.json["password"]
-    result=db.Users.find_one({'email':email,'password':password})
+    result=db.Users.find_one({'email':username,'password':password})
+    results=db.Users.find_one({'numberphone':username,'password':password})
+
     if result:
         return {"message":"Login succes","status":True,
             "userinfo":[
@@ -89,9 +94,18 @@ def Login():
                 "userid": str(result['_id']),
                 "name":result['name'],
                 "lastname":result['lastname']}]         
-            }  
-    else: 
-        return{ "message":"Login False","status":False }
+            } 
+
+    if results:
+        return {"message":"Login succes","status":True,
+            "userinfo":[
+            {
+                "userid": str(results['_id']),
+                "name":results['name'],
+                "lastname":results['lastname']}]         
+            } 
+    else:
+        return { "message":"เข้าสู่ระบบไม่สำเร็จ","status":False }
 
               
 
@@ -123,16 +137,16 @@ def Getproduct(store_ID):
 #add product from store
 @app.route('/addproduct',methods = ['POST'])
 def Addproduct():
-    Price=request.json["price"]
-    quantity=request.json["stock_quantity"]
+    Price=int(request.json["price"])
+    quantity=int(request.json["stock_quantity"])
 
     if db.product.find_one({'proname':request.json["proname"]}):
         return {"messags":"product name is Alerdy"}
     else:
         db.product.insert_one({'proname':request.json["proname"],
-                                   'price': int(Price) ,
+                                   'price': Price ,
                                    'pro_img':request.json["pro_img"],
-                                   'stock_quantity':int(quantity),
+                                   'stock_quantity':quantity,
                                    'store_ID':request.json["store_ID"]
                                    })
         return {"messags":"Add product success"}
@@ -264,7 +278,7 @@ def getorderTcaking(userid):
 #post store  register for vendor 
 @app.route('/Createstore',methods=['POST'])
 def postStore():
-    storeID=request.json["store_ID"]
+    storeID=genBill()
     storename=request.json["storename"]
     coordinates=request.json["coordinates"]
     userid=request.json["userid"]
@@ -273,7 +287,7 @@ def postStore():
     result=db.store.insert_one({
          "store_ID":storeID,
          "storename":storename,
-         "coordinates":coordinates,
+         "coordinates":int(coordinates),
          "userid":userid,
          "lat":lat,
          "long":longs})
@@ -298,7 +312,6 @@ def getstore(userid):
 #create_link_store for mobile Application 
 @app.route('/createlink',methods=['POST'])
 def createLink():  
-    d1 = today.strftime("%d/%m/%Y")
     products=request.json["products"]
     store_ID=request.json["store_ID"]
     Date=d1
@@ -319,12 +332,31 @@ def createLink():
 
 
 
-#getDataLinkStores for MobileApp
+#getData LinkStores for MobileApp
 @app.route('/getDataLinkStores/<string:storeID>',methods=['GET'])
 def getDataLinkStores(storeID):
+    outputLinks=[]
     results=db.LinkStore.find({'store_ID':storeID})
-    print(list(results))
-    return {"message":"GetDataLinkStore success"}
+    for x in results:
+        outputLinks.append({
+                            'id':str(x['_id']),                          
+                            'Date':x['Date'],
+                            'Delivery_time':x['Delivery_time'],
+                            'Url_path':x['Url_path'],
+                            'link_expired':x['link_expired']
+                            })
+
+    return {"message":"GetDataLinkStore success","Links":outputLinks}
+
+
+#delete LinkStore 
+@app.route('/DeleteLink/<string:LinkID>',methods=['GET'])
+def DeleteLink(LinkID):
+    result = db.LinkStore.delete_many({'_id':ObjectId(LinkID)})
+    if result :
+        return {"message":"delete sucess"}
+
+
 
 
 
@@ -346,11 +378,13 @@ def GetProductShop(linkStoreID):
                             "product_price":product["price"],
                             "product_img":product["pro_img"],
                             "number":0})                          
-    return {"products":output,"storeID":storeID}
+    if storeID=="":
+        return {"message":"ไม่พบลิงค์ขายสินค้านี้ หรือ ลิงค์หมดอายุแล้ว"}
 
-   
+    else:
+        return {"products":output,"storeID":storeID}
 
-
+        
 
 
 #update status order  for mobile application 
