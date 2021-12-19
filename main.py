@@ -481,7 +481,7 @@ def GetorderStore(store_ID):
                 }) 
         #print(productList)
         #print(getProductList(productList))         
-        return {"GetorderStore":"success","ordersStore":orderStore}
+        return jsonify(orderStore)  
 
 
 UPLOAD_FOLDER = 'uploads'
