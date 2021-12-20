@@ -8,7 +8,6 @@ from pymongo.message import _EMPTY
 from twilio.rest import Client
 from flask_cors import CORS
 from bson.timestamp import Timestamp
-import datetime as dt
 from models.login import genotp,addNumberPhoneUser,genBill
 from models.user import GetuserData
 from config.db import db
@@ -17,7 +16,7 @@ import os
 from werkzeug.utils import secure_filename
 import urllib.request
 from datetime import date
-
+from datetime import datetime
 app = Flask(__name__)
 CORS(app) 
 
@@ -28,6 +27,7 @@ def home():
 
 today = date.today()
 d1 = today.strftime("%d/%m/%Y")
+now = datetime.now()
 
 #Login OTP 
 @app.route('/LoginOTP',methods=['POST'])
@@ -195,19 +195,20 @@ def Updateproduct(proID):
 #post ordrs from user 
 @app.route('/post_order',methods=['POST'])
 def postOrder():
-    timeNow=dt.datetime.now()
+    Date=d1
+    current_time = now.strftime("%H:%M:%S")
     orderlist={
     "userid":request.json["userid"],
     "bill_id":"GV"+genBill(),
     "store_ID":request.json["store_ID"],
-    "date":Timestamp(int(dt.datetime.today().timestamp()), 1),
+    "date":Date,
     "status_order":[
         {"time":"00:00","status":"จัดส่งสำเร็จ","check":False},
         {"time":"00:00","status":"สินค้ากำลังจัดส่ง","check":False},
         {"time":"00:00","status":"ผู้ขายกำลังเตรียมสินค้า","check":False},
         {"time":"00:00","status":"ยืนยันคำสั่งซื้อ","check":False}],
     "order_products":request.json["order_products"],
-    "orderTime":timeNow.timestamp(),
+    "orderTime": current_time,
     "Pickup_time":request.json["Pickup_time"],
     "note":request.json["note"]
     }
@@ -350,7 +351,7 @@ def getDataLinkStores(storeID):
 
 
 #delete LinkStore 
-@app.route('/DeleteLink/<string:LinkID>',methods=['GET'])
+@app.route('/DeleteLink/<string:LinkID>',methods=['DELETE'])
 def DeleteLink(LinkID):
     result = db.LinkStore.delete_many({'_id':ObjectId(LinkID)})
     if result :
@@ -390,30 +391,30 @@ def GetProductShop(linkStoreID):
 #update status order  for mobile application 
 @app.route('/updateStatusOrder/<string:bill_id>/<string:statusnum>',methods=['PUT'])
 def updateStatusOrder(bill_id,statusnum):
-
+    current_time = now.strftime("%H:%M:%S")
     if statusnum == '1':
         db.orders.update_one(
                 {
                 "bill_id":bill_id,"status_order.status":"ยืนยันคำสั่งซื้อ"},
-                {"$set":{"status_order.$.check":True,"status_order.$.time":request.json["Time"]} }
+                {"$set":{"status_order.$.check":True,"status_order.$.time":current_time} }
                 )
     elif statusnum =='2':
          db.orders.update_one(
                 {
                 "bill_id":bill_id,"status_order.status":"ผู้ขายกำลังเตรียมสินค้า"},
-                {"$set":{"status_order.$.check":True,"status_order.$.time":request.json["Time"]} }
+                {"$set":{"status_order.$.check":True,"status_order.$.time":current_time} }
                 )
     elif statusnum =='3':
          db.orders.update_one(
                 {
                 "bill_id":bill_id,"status_order.status":"สินค้ากำลังจัดส่ง"},
-                {"$set":{"status_order.$.check":True,"status_order.$.time":request.json["Time"]} }
+                {"$set":{"status_order.$.check":True,"status_order.$.time":current_time} }
                 )
     elif statusnum =='4':
          db.orders.update_one(
                 {
                 "bill_id":bill_id,"status_order.status":"จัดส่งสำเร็จ"},
-                {"$set":{"status_order.$.check":True,"status_order.$.time":request.json["Time"]} }
+                {"$set":{"status_order.$.check":True,"status_order.$.time":current_time} }
                 )
 
     return {"message":"update status success"}
