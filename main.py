@@ -28,7 +28,7 @@ def home():
 today = date.today()
 d1 = today.strftime("%d/%m/%Y")
 now = datetime.now()
-
+current_time = now.strftime("%H:%M:%S")
 #Login OTP 
 @app.route('/LoginOTP',methods=['POST'])
 def LoginOTP() :    
@@ -137,17 +137,19 @@ def Getproduct(store_ID):
 #add product from store
 @app.route('/addproduct',methods = ['POST'])
 def Addproduct():
-    Price=int(request.json["price"])
-    quantity=int(request.json["stock_quantity"])
-
+    Price=request.json["price"]
+    quantity=request.json["stock_quantity"]
+    proname=request.json["proname"]
+    proimg=request.json["pro_img"]
+    storeId=request.json["store_ID"]
     if db.product.find_one({'proname':request.json["proname"]}):
         return {"messags":"product name is Alerdy"}
     else:
-        db.product.insert_one({'proname':request.json["proname"],
+        db.product.insert_one({'proname':proname,
                                    'price': Price ,
-                                   'pro_img':request.json["pro_img"],
+                                   'pro_img':proimg,
                                    'stock_quantity':quantity,
-                                   'store_ID':request.json["store_ID"]
+                                   'store_ID':storeId
                                    })
         return {"messags":"Add product success"}
 
@@ -358,9 +360,6 @@ def DeleteLink(LinkID):
         return {"message":"delete sucess"}
 
 
-
-
-
 #getproduct from link store sale for WebApp
 @app.route('/GetProductShop/<string:linkStoreID>',methods=['GET'])
 def GetProductShop(linkStoreID):
@@ -391,7 +390,7 @@ def GetProductShop(linkStoreID):
 #update status order  for mobile application 
 @app.route('/updateStatusOrder/<string:bill_id>/<string:statusnum>',methods=['PUT'])
 def updateStatusOrder(bill_id,statusnum):
-    current_time = now.strftime("%H:%M:%S")
+    
     if statusnum == '1':
         db.orders.update_one(
                 {
@@ -449,10 +448,6 @@ def getContactUser(userid):
 
      
 
-
-
-
-
 #function get data products 
 def getProductList(productList):
     finalpro=''
@@ -467,22 +462,47 @@ def GetorderStore(store_ID):
     orderStore=[]
     results=db.orders.find({'store_ID':store_ID})
     productList=''
-
     if(results):
         for x in results:      
             productList=x['order_products']
             orderStore.append({
-                'bill_id':x['bill_id'],
+                'bill_id':x['bill_id'], 
                 'Pickup_time':x['Pickup_time'],
                 'note':x['note'],               
                 'name':GetuserData(x['userid'])['name'],
                 'numberphone':GetuserData(x['userid'])['numberphone'],
                 'adress':GetuserData(x['userid'])['adress'],
-                'products':getProductList(productList)       
-                }) 
-        #print(productList)
-        #print(getProductList(productList))         
+                'products':getProductList(productList),
+                'ordertime':x['orderTime']       
+                })         
         return jsonify(orderStore)  
+
+
+#save review score 
+@app.route('/SaveReview',methods=['POST'])
+def SaveReview():
+    order_id=request.json["orderID"]  
+    img_upload=request.json["imgupload"]
+    rate_detail=request.json["rate_detail"]
+    value=request.json["value"]
+    result=db.Rateting.insert_one({'orderID':order_id,'img_upload':img_upload,'rate_detail':rate_detail,'value':value})
+    if result:
+        return {"message":"save your review success"}
+
+
+#get review score 
+@app.route('/GetReview/<string:orderID>')
+def GetReview(orderID):
+    result = db.Rateting.find({'orderID':orderID})
+    print(list(result))
+    return {"message":"get Review your success"}
+
+
+#update reviw score 
+@app.route('/updateReview/<string:orderID>')
+def updateReview():
+    return {"messasge":"update your review succes"}
+
 
 
 UPLOAD_FOLDER = 'uploads'
@@ -495,7 +515,7 @@ ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route('/api/upload', methods=['POST'])
+@app.route('/upload', methods=['POST'])
 def upload_image():
     if 'image' not in request.files:
         resp = jsonify({
