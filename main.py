@@ -40,6 +40,7 @@ today = date.today()
 d1 = today.strftime("%d/%m/%Y")
 now = datetime.now()
 current_time = now.strftime("%H:%M:%S")
+
 #Login OTP 
 @app.route('/LoginOTP',methods=['POST'])
 def LoginOTP() :    
@@ -206,7 +207,6 @@ def Updateproduct(proID):
 @app.route('/post_order',methods=['POST'])
 def postOrder():
     Date=d1
-    current_time = now.strftime("%H:%M:%S")
     orderlist={
     "userid":request.json["userid"],
     "bill_id":"GV"+genBill(),
