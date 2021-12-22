@@ -24,6 +24,17 @@ CORS(app)
 def home():
     return {"message":"Hello World REST API"}
 
+UPLOAD_FOLDER = 'uploads/reviews'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+
+ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
 
 today = date.today()
 d1 = today.strftime("%d/%m/%Y")
@@ -174,11 +185,9 @@ def getProduct(_id):
 #update data product from store 
 @app.route('/UpdateProduct/<string:proID>',methods=['PUT'])
 def Updateproduct(proID):
-
     proname=request.json["proname"]
     price=request.json["price"]
     prostock=request.json["stock_quantity"]
-
     query={"_id":ObjectId(proID)} 
     newvalue={   
             "$set":{        
@@ -190,7 +199,6 @@ def Updateproduct(proID):
     result=db.product.update_one(query,newvalue)
     if(result):
         return {"messages":"update prodct success ","status":True}
-
 
 
 
@@ -360,6 +368,7 @@ def DeleteLink(LinkID):
         return {"message":"delete sucess"}
 
 
+
 #getproduct from link store sale for WebApp
 @app.route('/GetProductShop/<string:linkStoreID>',methods=['GET'])
 def GetProductShop(linkStoreID):
@@ -482,40 +491,49 @@ def GetorderStore(store_ID):
 @app.route('/SaveReview',methods=['POST'])
 def SaveReview():
     order_id=request.json["orderID"]  
-    img_upload=request.json["imgupload"]
     rate_detail=request.json["rate_detail"]
     value=request.json["value"]
-    result=db.Rateting.insert_one({'orderID':order_id,'img_upload':img_upload,'rate_detail':rate_detail,'value':value})
-    if result:
-        return {"message":"save your review success"}
+    imag=request.files.getlist('image')
+    check_review=db.Rateting.find_one({'orderID':order_id})
+    if check_review:
+        return {"message":"your have reviwe ok"}
+    else:  
+        result=db.Rateting.insert_one({'orderID':order_id,'img_upload':"",'rate_detail':rate_detail,'value':value})
+        if result:
+            return {"message":"save your review success billID is "+order_id}
 
 
 #get review score 
-@app.route('/GetReview/<string:orderID>')
+@app.route('/GetReview/<string:orderID>',methods=['GET'])
 def GetReview(orderID):
+    output={}
     result = db.Rateting.find({'orderID':orderID})
-    print(list(result))
-    return {"message":"get Review your success"}
+    for x in result:
+        output={'_id':str(x['_id']), 'orderID':x['orderID'] ,'img_upload':x['img_upload'], 'rate_detail':x['rate_detail'] ,'value':x['value']}
+    return output
+
 
 
 #update reviw score 
-@app.route('/updateReview/<string:orderID>')
-def updateReview():
-    return {"messasge":"update your review succes"}
+@app.route('/updateReview/<string:orderID>',methods=['PUT'])
+def updateReview(orderID):
+    query={'orderID':orderID}
+    rate_detail=request.json["rate_detail"]
+    value=request.json["value"]
+    newvalue ={
+                "$set":{
+                        "rate_detail":rate_detail,
+                        "value":value
+                       }
+    }
+    update=db.Rateting.update_one(query,newvalue)
+    if update:
+        return {"messasge":"update your review succes orderID is "+orderID}
 
 
 
-UPLOAD_FOLDER = 'uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
-ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
-
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-@app.route('/upload', methods=['POST'])
+@app.route('/upload_review', methods=['POST'])
 def upload_image():
     if 'image' not in request.files:
         resp = jsonify({
