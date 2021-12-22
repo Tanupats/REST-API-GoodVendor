@@ -239,7 +239,7 @@ def getstoreData(storeid):
 @app.route('/getorder/<string:userid>',methods=['GET'])
 def getorder(userid):
     orders=[]
-    result_orders=db.orders.find({'userid':userid,"status_order.status":"ยืนยันคำสั่งซื้อ","status_order.check":True})
+    result_orders=db.orders.find({'userid':userid})
     storeid=""
     for x in result_orders:
         storeid=x['store_ID']
