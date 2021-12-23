@@ -1,9 +1,11 @@
 from typing import List
 from types import MethodType
 from bson import ObjectId
+from flask.helpers import send_file
 import pymongo,json
 from flask import Flask,request,jsonify
 from pymongo import results
+from pymongo import response
 from pymongo.message import _EMPTY
 from twilio.rest import Client
 from flask_cors import CORS
@@ -19,6 +21,7 @@ from datetime import date
 from datetime import datetime
 app = Flask(__name__)
 CORS(app) 
+
 
 @app.route('/')
 def home():
@@ -447,12 +450,14 @@ def postcustomerContact():
 def getContactUser(userid):
     output=[]
     result=db.customer_contract.find({'userid':userid})
+    users=db.Users.find_one({'_id':ObjectId(userid)})
     if result :
         for x in result:
             output.append({
                         'adress':x['adress'],
                         'latitude':x['latitude'],
-                        'longitude':x['longitude']
+                        'longitude':x['longitude'],
+                        'numberphone':users['numberphone']
                         })
         return {"status":True,"message":"getContactUser Success","usercontact": output }
 
@@ -494,12 +499,12 @@ def SaveReview():
     order_id=request.json["orderID"]  
     rate_detail=request.json["rate_detail"]
     value=request.json["value"]
-    imag=request.files.getlist('image')
+    imag=request.json["image"]
     check_review=db.Rateting.find_one({'orderID':order_id})
     if check_review:
         return {"message":"your have reviwe ok"}
     else:  
-        result=db.Rateting.insert_one({'orderID':order_id,'img_upload':"",'rate_detail':rate_detail,'value':value})
+        result=db.Rateting.insert_one({'orderID':order_id,'img_upload':imag,'rate_detail':rate_detail,'value':value})
         if result:
             return {"message":"save your review success billID is "+order_id}
 
@@ -577,6 +582,11 @@ def upload_image():
         resp = jsonify(errors)
         resp.status_code = 500
         return resp
+
+@app.route('/getimg')
+def getimg():
+    return send_file('uploads/reviews/6a5501c9-4f03-493b-b06c-35cec5795043.jpg',mimetype="image/jpg")
+    
 
 if __name__ == '__main__':
     app.run(debug=True,host="localhost",port=5000)
