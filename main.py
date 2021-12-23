@@ -445,6 +445,7 @@ def postcustomerContact():
         return  {"status":True,"message":"postCustomerContract Success"}
 
 
+
 #get customer  one contract 
 @app.route('/getcustomerContact/<string:userid>',methods=['GET'])
 def getContactUser(userid):
@@ -457,11 +458,13 @@ def getContactUser(userid):
                         'adress':x['adress'],
                         'latitude':x['latitude'],
                         'longitude':x['longitude'],
-                        'numberphone':users['numberphone']
+                        'numberphone':users['numberphone'],
+                        'name':users['name']
                         })
         return {"status":True,"message":"getContactUser Success","usercontact": output }
 
      
+
 
 #function get data products 
 def getProductList(productList):
