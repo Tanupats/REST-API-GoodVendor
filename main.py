@@ -158,7 +158,7 @@ def Addproduct():
         return {"messags":"product name is Alerdy"}
     else:
         db.product.insert_one({'proname':proname,
-                                   'price': Price ,
+                                   'price': Price,
                                    'pro_img':proimg,
                                    'stock_quantity':quantity,
                                    'store_ID':storeId
@@ -217,6 +217,7 @@ def postOrder():
         {"time":"00:00","status":"สินค้ากำลังจัดส่ง","check":False},
         {"time":"00:00","status":"ผู้ขายกำลังเตรียมสินค้า","check":False},
         {"time":"00:00","status":"ยืนยันคำสั่งซื้อ","check":False}],
+    "status":"ยืนยันคำสั่งซื้อ",
     "order_products":request.json["order_products"],
     "orderTime": current_time,
     "Pickup_time":request.json["Pickup_time"],
@@ -239,7 +240,7 @@ def getstoreData(storeid):
 @app.route('/getorder/<string:userid>',methods=['GET'])
 def getorder(userid):
     orders=[]
-    result_orders=db.orders.find({'userid':userid})
+    result_orders=db.orders.find({"userid":userid,"status":"ยืนยันคำสั่งซื้อ"})
     storeid=""
     for x in result_orders:
         storeid=x['store_ID']
@@ -250,7 +251,7 @@ def getorder(userid):
             'bill_id':x['bill_id'],
             'storename':storename,
             'store_img':storeimg,
-            'status_order':'ยืนยันคำสั่งซื้อ'
+            'status_order':x['status']
          })
     return {"meesage":"getorder success","order":orders}
 
@@ -271,9 +272,9 @@ def getorderDetail(bill_id):
 @app.route('/getordertracking/<string:userid>',methods=['GET'])
 def getorderTcaking(userid):
     ordersTrace=[]
-    storeid={}
+    storeid=""
     storeData=''   
-    result=db.orders.find({"userid":userid,"status_order.status":"จัดส่งสำเร็จ","status_order.check":True})
+    result=db.orders.find({"userid":userid,"status":"จัดส่งสำเร็จ"})
     for x in result:
         storeid=x['store_ID']
         storeData=getstoreData(storeid)
@@ -281,7 +282,7 @@ def getorderTcaking(userid):
             'bill_id':x['bill_id'],
             'storename': str(storeData['name']),
             'store_img':storeData['store_img'],
-            'status_order':'จัดส่งสำเร็จ'
+            'status_order':x['status']
         })     
     return {"meesage":"getorder tracking success","orders":ordersTrace}
 
