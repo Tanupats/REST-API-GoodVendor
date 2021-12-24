@@ -212,7 +212,6 @@ def postOrder():
     Date=d1
     orderlist={
     "userid":request.json["userid"],
-    "bill_id":"GV"+genBill(),
     "store_ID":request.json["store_ID"],
     "date":Date,
     "status_order":[
@@ -251,7 +250,7 @@ def getorder(userid):
         storeimg=getstoreData(storeid)['store_img']
         orders.append(
         {
-            'bill_id':x['bill_id'],
+            'bill_id': str(x['_id']),
             'storename':storename,
             'store_img':storeimg,
             'status_order':x['status']
