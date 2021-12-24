@@ -263,7 +263,7 @@ def getorder(userid):
 @app.route('/getorderDetail/<string:bill_id>',methods=['GET'])
 def getorderDetail(bill_id):
     orders=[]
-    result_order=db.orders.find({'bill_id':bill_id})
+    result_order=db.orders.find({'_id':ObjectId(bill_id)})
     for x in result_order:
         orders.append({'orderList':x['order_products'],"status_order":x['status_order']})
     return {"meesage":"getorder detail success","orders":orders,'bill_id':bill_id}
@@ -281,7 +281,7 @@ def getorderTcaking(userid):
         storeid=x['store_ID']
         storeData=getstoreData(storeid)
         ordersTrace.append({
-            'bill_id':x['bill_id'],
+            'bill_id': str(x['_id']),
             'storename': str(storeData['name']),
             'store_img':storeData['store_img'],
             'status_order':x['status']
