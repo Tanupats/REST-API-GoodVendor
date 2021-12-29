@@ -19,6 +19,7 @@ from werkzeug.utils import secure_filename
 import urllib.request
 from datetime import date
 from datetime import datetime
+import os, time
 app = Flask(__name__)
 CORS(app) 
 
@@ -27,12 +28,17 @@ CORS(app)
 def home():
     return {"message":"Hello World REST API"}
 
+#set phat for upload File 
 UPLOAD_FOLDER = 'uploads/reviews'
+UPLOAD_FOLDER_PRODUCT='uploads/products'
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['UPLOAD_FOLDER_PRODUCT']=UPLOAD_FOLDER_PRODUCT
+
+
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
-
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -42,7 +48,7 @@ def allowed_file(filename):
 today = date.today()
 d1 = today.strftime("%d/%m/%Y")
 now = datetime.now()
-current_time = now.strftime("%H:%M:%S")
+
 
 #Login OTP 
 @app.route('/LoginOTP',methods=['POST'])
@@ -50,7 +56,7 @@ def LoginOTP() :
     numberphone=request.json["numberphone"]  
     otp=genotp()
     account_sid = "AC972c43f1b33f1b1fdf504a65febf75a4"
-    auth_token = "34772187d19d17d3a20f1cf17b829099"
+    auth_token = "c74af5399ec8d3750d3391b6068eadac"
     PHONE_NUMBER="+13868537656"
     client = Client(account_sid, auth_token)
     client.api.account.messages.create(to="+66"+numberphone,from_=PHONE_NUMBER,body="GV-OTP : "+str(otp))
@@ -150,23 +156,64 @@ def Getproduct(store_ID):
      
 
 #add product from store
-@app.route('/addproduct',methods = ['POST'])
+@app.route('/addproduct',methods = ['GET','POST'])
 def Addproduct():
-    Price=request.json["price"]
-    quantity=request.json["stock_quantity"]
-    proname=request.json["proname"]
-    proimg=request.json["pro_img"]
-    storeId=request.json["store_ID"]
-    if db.product.find_one({'proname':request.json["proname"]}):
+    Price=request.form.get("price")  
+    quantity=request.form.get("stock_quantity")
+    proname=request.form.get("proname")
+    storeId=request.form.get("store_ID")
+
+    if db.product.find_one({'proname':proname}):
         return {"messags":"product name is Alerdy"}
     else:
-        db.product.insert_one({'proname':proname,
-                                   'price': Price,
-                                   'pro_img':proimg,
-                                   'stock_quantity':quantity,
+        if 'image' not in request.files:
+            resp = jsonify({
+                'status' : False,
+                'message' : 'Image is not defined'})
+            resp.status_code = 400
+            return resp
+
+    files = request.files.getlist('image')
+
+    errors = {}
+    success = False
+
+    for photo in files:
+
+        if photo and allowed_file(photo.filename):
+            filename = secure_filename(photo.filename)
+            photo.save(os.path.join(app.config['UPLOAD_FOLDER_PRODUCT'], filename))
+            success = True
+        else:
+            errors[photo.filename] = 'Image type is not allowed'
+
+    if success and errors:
+        errors['message'] = jsonify({
+            'data' : photo.filename,
+            'status' : True,
+            'message' : 'Image(s) successfully uploaded'})
+        resp = jsonify(errors)
+        resp.status_code = 500
+        return resp
+
+    if success:
+        resp = jsonify({
+            'pro_img' : photo.filename,
+            'status' : True,
+            'message' : 'Images successfully uploaded and save dataProduct'})
+        resp.status_code = 201
+        db.product.insert_one({    'proname':proname,
+                                   'price':int(Price) ,
+                                   'pro_img':photo.filename,
+                                   'stock_quantity':int(quantity),
                                    'store_ID':storeId
                                    })
-        return {"messags":"Add product success"}
+        return resp
+    else:
+        resp = jsonify(errors)
+        resp.status_code = 500
+        return resp
+        
 
 
 #get product from productID 
@@ -210,6 +257,7 @@ def Updateproduct(proID):
 @app.route('/post_order',methods=['POST'])
 def postOrder():
     Date=d1
+    current_time = now.strftime("%H:%M:%S")
     orderlist={
     "userid":request.json["userid"],
     "store_ID":request.json["store_ID"],
@@ -360,7 +408,7 @@ def getDataLinkStores(storeID):
                             'link_expired':x['link_expired']
                             })
 
-    return {"message":"GetDataLinkStore success","Links":outputLinks}
+    return jsonify({"message":"GetDataLinkStore success","Links":outputLinks})  
 
 
 #delete LinkStore 
@@ -396,36 +444,36 @@ def GetProductShop(linkStoreID):
     else:
         return {"products":output,"storeID":storeID}
 
-        
 
 
 #update status order  for mobile application 
-@app.route('/updateStatusOrder/<string:bill_id>/<string:statusnum>',methods=['PUT'])
-def updateStatusOrder(bill_id,statusnum):
-    
-    if statusnum == '1':
+@app.route('/updateStatusOrder/<string:bill_id>/<string:status>',methods=['PUT'])
+def updateStatusOrder(bill_id,status):  
+    current_time = now.strftime("%H:%M:%S")
+    print(current_time)
+    if status == 'order_confirmation':
         db.orders.update_one(
                 {
-                "bill_id":bill_id,"status_order.status":"ยืนยันคำสั่งซื้อ"},
-                {"$set":{"status_order.$.check":True,"status_order.$.time":current_time} }
+                "_id":ObjectId(bill_id),"status_order.status":"ยืนยันคำสั่งซื้อ"},
+                {"$set":{"status":"ยืนยันคำสั่งซื้อ","status_order.$.check":True,"status_order.$.time":current_time} }
                 )
-    elif statusnum =='2':
+    elif status =='2':
          db.orders.update_one(
                 {
-                "bill_id":bill_id,"status_order.status":"ผู้ขายกำลังเตรียมสินค้า"},
-                {"$set":{"status_order.$.check":True,"status_order.$.time":current_time} }
+                "_id":ObjectId(bill_id),"status_order.status":"ผู้ขายกำลังเตรียมสินค้า"},
+                {"$set":{"status":"ผู้ขายกำลังเตรียมสินค้า","status_order.$.check":True,"status_order.$.time":current_time} }
                 )
-    elif statusnum =='3':
+    elif status =='3':
          db.orders.update_one(
                 {
-                "bill_id":bill_id,"status_order.status":"สินค้ากำลังจัดส่ง"},
-                {"$set":{"status_order.$.check":True,"status_order.$.time":current_time} }
+                "_id":ObjectId(bill_id),"status_order.status":"สินค้ากำลังจัดส่ง"},
+                {"$set":{"status":"สินค้ากำลังจัดส่ง","status_order.$.check":True,"status_order.$.time":current_time} }
                 )
-    elif statusnum =='4':
+    elif status =='4':
          db.orders.update_one(
                 {
-                "bill_id":bill_id,"status_order.status":"จัดส่งสำเร็จ"},
-                {"$set":{"status_order.$.check":True,"status_order.$.time":current_time} }
+                "_id":ObjectId(bill_id),"status_order.status":"จัดส่งสำเร็จ"},
+                {"$set":{"status":"จัดส่งสำเร็จ","status_order.$.check":True,"status_order.$.time":current_time} }
                 )
 
     return {"message":"update status success"}
@@ -469,7 +517,7 @@ def getContactUser(userid):
 def getProductList(productList):
     finalpro=''
     for n in productList:
-            finalpro+='\n'+n['product_name']+" "+str(n['number'])+ " กิโลกรัม"
+            finalpro+=n['product_name']+" "+str(n['number'])+"\n"
     return(finalpro)
 
 
@@ -482,13 +530,16 @@ def GetorderStore(store_ID):
     if(results):
         for x in results:      
             productList=x['order_products']
+            usersdata=GetuserData(x['userid'])
             orderStore.append({
-                'bill_id':x['bill_id'], 
+                'bill_id': str(x['_id']) , 
                 'Pickup_time':x['Pickup_time'],
                 'note':x['note'],               
-                'name':GetuserData(x['userid'])['name'],
-                'numberphone':GetuserData(x['userid'])['numberphone'],
-                'adress':GetuserData(x['userid'])['adress'],
+                'name':usersdata['name'],
+                'numberphone':usersdata['numberphone'],
+                'adress':usersdata['adress'],
+                'lat':usersdata['lat'],
+                'lang':usersdata['lang'],
                 'products':getProductList(productList),
                 'ordertime':x['orderTime']       
                 })         
@@ -496,19 +547,60 @@ def GetorderStore(store_ID):
 
 
 #save review score 
-@app.route('/SaveReview',methods=['POST'])
+@app.route('/SaveReview',methods = ['GET','POST'])
 def SaveReview():
-    order_id=request.json["orderID"]  
-    rate_detail=request.json["rate_detail"]
-    value=request.json["value"]
-    imag=request.json["image"]
+
+    order_id=request.form.get("orderID")
+    rate_detail=request.form.get("rate_detail")
+    value=request.form.get("value")
+
     check_review=db.Rateting.find_one({'orderID':order_id})
     if check_review:
-        return {"message":"your have reviwe ok"}
-    else:  
-        result=db.Rateting.insert_one({'orderID':order_id,'img_upload':imag,'rate_detail':rate_detail,'value':value})
-        if result:
-            return {"message":"save your review success billID is "+order_id}
+        return {"message":"your  reviwe  is already or Edit reviwe"}
+    else:
+         if 'image' not in request.files:
+            resp = jsonify({
+                'status' : False,
+                'message' : 'Image is not defined'})
+            resp.status_code = 400
+            return resp
+
+    files = request.files.getlist('image')
+
+    errors = {}
+    success = False
+
+    for photo in files:
+
+        if photo and allowed_file(photo.filename):
+            filename = secure_filename(photo.filename)
+            photo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            success = True
+        else:
+            errors[photo.filename] = 'Image type is not allowed'
+
+    if success and errors:
+        errors['message'] = jsonify({
+            'data' : photo.filename,
+            'status' : True,
+            'message' : 'Image(s) successfully uploaded'})
+        resp = jsonify(errors)
+        resp.status_code = 500
+        return resp
+
+    if success:
+        resp = jsonify({
+            'review_img' : photo.filename,
+            'status' : True,
+            'message' : 'save reviews is billID'+order_id})
+        resp.status_code = 201
+        db.Rateting.insert_one({'orderID':order_id,'img_upload':photo.filename,'rate_detail':rate_detail,'value':value})
+        return resp
+    else:
+        resp = jsonify(errors)
+        resp.status_code = 500
+        return resp  
+     
 
 
 #get review score 
@@ -541,8 +633,10 @@ def updateReview(orderID):
 
 
 
-@app.route('/upload_review', methods=['POST'])
+@app.route('/upload', methods=['POST'])
 def upload_image():
+    title=request.form.get("title")
+    print(title)
     if 'image' not in request.files:
         resp = jsonify({
             'status' : False,
@@ -589,8 +683,7 @@ def upload_image():
 def getimg():
     return send_file('uploads/reviews/6a5501c9-4f03-493b-b06c-35cec5795043.jpg',mimetype="image/jpg")
     
-
 if __name__ == '__main__':
-    app.run(debug=True,host="localhost",port=5000)
+    app.run(debug=True,port=5000)
    
 
