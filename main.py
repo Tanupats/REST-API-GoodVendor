@@ -434,15 +434,12 @@ def GetProductShop(linkStoreID):
         for product in products:
             output.append({ 
                             "product_id":product["product_id"],
-                            "product_name":product["proname"],
-                            "product_price":product["price"],
-                            "product_img":product["pro_img"],
+                            "product_name":product["product_name"],
+                            "product_price":product["product_price"],
+                            "product_img":product["product_img"],
                             "number":0})                          
-    if storeID=="":
-        return {"message":"ไม่พบลิงค์ขายสินค้านี้ หรือ ลิงค์หมดอายุแล้ว"}
-
-    else:
-        return {"products":output,"storeID":storeID}
+        storeData=getstoreData(storeID)['name']
+        return {"products":output,"storeID":storeID,"storename":storeData}
 
 
 
@@ -609,7 +606,7 @@ def GetReview(orderID):
     output={}
     result = db.Rateting.find({'orderID':orderID})
     for x in result:
-        output={'_id':str(x['_id']), 'orderID':x['orderID'] ,'img_upload':x['img_upload'], 'rate_detail':x['rate_detail'] ,'value':x['value']}
+        output={'orderID':x['orderID'] ,'img_upload':x['img_upload'], 'rate_detail':x['rate_detail'] ,'value':x['value']}
     return output
 
 
@@ -684,6 +681,6 @@ def getimg():
     return send_file('uploads/reviews/6a5501c9-4f03-493b-b06c-35cec5795043.jpg',mimetype="image/jpg")
     
 if __name__ == '__main__':
-    app.run(debug=True,port=5000)
+    app.run(debug=True,host="localhost",port=5000)
    
 
