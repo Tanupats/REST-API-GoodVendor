@@ -158,11 +158,10 @@ def Getproduct(store_ID):
 #add product from store
 @app.route('/addproduct',methods = ['GET','POST'])
 def Addproduct():
-    Price=request.form.get("price")  
+    Price=request.form.get("price")
     quantity=request.form.get("stock_quantity")
     proname=request.form.get("proname")
     storeId=request.form.get("store_ID")
-
     if db.product.find_one({'proname':proname}):
         return {"messags":"product name is Alerdy"}
     else:
@@ -202,10 +201,11 @@ def Addproduct():
             'status' : True,
             'message' : 'Images successfully uploaded and save dataProduct'})
         resp.status_code = 201
+        
         db.product.insert_one({    'proname':proname,
-                                   'price':int(Price) ,
+                                   'price':Price ,
                                    'pro_img':photo.filename,
-                                   'stock_quantity':int(quantity),
+                                   'stock_quantity':quantity,
                                    'store_ID':storeId
                                    })
         return resp
@@ -435,7 +435,7 @@ def GetProductShop(linkStoreID):
             output.append({ 
                             "product_id":product["product_id"],
                             "product_name":product["product_name"],
-                            "product_price":product["product_price"],
+                            "product_price":int(product["product_price"]) ,
                             "product_img":product["product_img"],
                             "number":0})                          
         storeData=getstoreData(storeID)['name']
@@ -514,7 +514,7 @@ def getContactUser(userid):
 def getProductList(productList):
     finalpro=''
     for n in productList:
-            finalpro+=n['product_name']+" "+str(n['number'])+"\n"
+            finalpro+="\n"+n['product_name']+" "+str(n['number'])
     return(finalpro)
 
 
@@ -676,9 +676,10 @@ def upload_image():
         resp.status_code = 500
         return resp
 
-@app.route('/getimg')
-def getimg():
-    return send_file('uploads/reviews/6a5501c9-4f03-493b-b06c-35cec5795043.jpg',mimetype="image/jpg")
+@app.route('/getimage/<string:filename>')
+def getimg(filename):
+    Files='uploads/products/'+filename
+    return send_file(Files,mimetype="image/jpg")
     
 if __name__ == '__main__':
     app.run(debug=True,host="localhost",port=5000)
