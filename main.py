@@ -56,7 +56,7 @@ def LoginOTP() :
     numberphone=request.json["numberphone"]  
     otp=genotp()
     account_sid = "AC972c43f1b33f1b1fdf504a65febf75a4"
-    auth_token = "c74af5399ec8d3750d3391b6068eadac"
+    auth_token = "ae54a197f527a2e2a7727c369eb52505"
     PHONE_NUMBER="+13868537656"
     client = Client(account_sid, auth_token)
     client.api.account.messages.create(to="+66"+numberphone,from_=PHONE_NUMBER,body="GV-OTP : "+str(otp))
@@ -484,9 +484,15 @@ def postcustomerContact():
     latitude=request.json["latitude"]
     longitude=request.json["longitude"]
     adress=request.json["adress"] 
-    result=db.customer_contract.insert_one({'userid':userid,'latitude':latitude,'longitude':longitude,'adress':adress})
+    if db.customer_contract.find_one({'userid':userid}):
+        return  {"status":False,"message":"Contact information has been added."}
+    result=db.customer_contract.insert_one(
+   {'userid':userid,
+    'latitude':latitude,
+    'longitude':longitude,
+    'adress':adress})
     if(result):
-        return  {"status":True,"message":"postCustomerContract Success"}
+        return  {"status":True,"message":"postCustomerContract Success."}
 
 
 
