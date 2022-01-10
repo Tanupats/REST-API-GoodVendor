@@ -23,11 +23,6 @@ import os, time
 app = Flask(__name__)
 CORS(app) 
 
-
-@app.route('/')
-def home():
-    return {"message":"Hello World REST API"}
-
 #set phat for upload File 
 UPLOAD_FOLDER = 'uploads/reviews'
 UPLOAD_FOLDER_PRODUCT='uploads/products'
@@ -50,13 +45,18 @@ d1 = today.strftime("%d/%m/%Y")
 now = datetime.now()
 
 
+
+@app.route('/')
+def home():
+    return {"message":"Hello World REST API"}
+
 #Login OTP 
 @app.route('/LoginOTP',methods=['POST'])
 def LoginOTP() :    
     numberphone=request.json["numberphone"]  
     otp=genotp()
     account_sid = "AC972c43f1b33f1b1fdf504a65febf75a4"
-    auth_token = "ae54a197f527a2e2a7727c369eb52505"
+    auth_token = "7499fb001a125fc0bd3b0cdc272b81d4"
     PHONE_NUMBER="+13868537656"
     client = Client(account_sid, auth_token)
     client.api.account.messages.create(to="+66"+numberphone,from_=PHONE_NUMBER,body="GV-OTP : "+str(otp))
@@ -203,14 +203,15 @@ def Addproduct():
         resp.status_code = 201
         
         db.product.insert_one({    'proname':proname,
-                                   'price':Price ,
+                                   'price': int(Price)     ,
                                    'pro_img':photo.filename,
-                                   'stock_quantity':quantity,
+                                   'stock_quantity':int(quantity),
                                    'store_ID':storeId
                                    })
         return resp
     else:
-        resp = jsonify(errors)
+        resp = jsonify(errors) 
+        
         resp.status_code = 500
         return resp
         
@@ -376,7 +377,7 @@ def getstore(userid):
 def createLink():  
     products=request.json["products"]
     store_ID=request.json["store_ID"]
-    Date=d1
+    Dates=request.json["Date"]
     Delivery_time=request.json["Delivery_time"]
     Url_path=store_ID+str(uuid.uuid4()) 
     link_expired=request.json["link_expired"]
@@ -384,7 +385,7 @@ def createLink():
     {   
         "products":products,
         "store_ID":store_ID,
-        "Date":Date,
+        "Date":Dates,
         "Delivery_time":Delivery_time,
         "Url_path":Url_path,
         "link_expired":link_expired
