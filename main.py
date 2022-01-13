@@ -550,6 +550,7 @@ def GetorderStore(store_ID):
         return jsonify(orderStore)  
 
 
+
 #save review score 
 @app.route('/SaveReview',methods = ['GET','POST'])
 def SaveReview():
@@ -688,6 +689,13 @@ def getimg(filename):
     Files='uploads/products/'+filename
     return send_file(Files,mimetype="image/jpg")
     
+@app.route('/GetimageReview/<string:filename>')
+def getimg(filename):
+    Files='uploads/reviews/'+filename
+    return send_file(Files,mimetype="image/jpg")
+    
+
+
 if __name__ == '__main__':
     app.run(debug=True,host="localhost",port=5000)
    
