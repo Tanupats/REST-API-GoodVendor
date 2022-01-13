@@ -599,7 +599,7 @@ def SaveReview():
             'status' : True,
             'message' : 'save reviews is billID'+order_id})
         resp.status_code = 201
-        db.Rateting.insert_one({'orderID':order_id,'img_upload':photo.filename,'rate_detail':rate_detail,'value':value})
+        db.Rateting.insert_one({'orderID':order_id,'img_upload':photo.filename,'rate_detail':rate_detail,'value':int(value)})
         return resp
     else:
         resp = jsonify(errors)
