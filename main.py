@@ -620,12 +620,13 @@ def GetReview(orderID):
 
 
 #update reviw score 
-@app.route('/updateReview/<string:orderID>',methods=['PUT'])
-def updateReview(orderID):
-    query={'orderID':orderID}
+@app.route('/updateReview',methods=['PUT'])
+def updateReview():
+    orderID=request.json["bill_id"]
     rate_detail=request.json["rate_detail"]
+    query={'orderID':orderID}
     value=request.json["value"]
-    newvalue ={
+    newvalue = {
                 "$set":{
                         "rate_detail":rate_detail,
                         "value":value
