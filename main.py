@@ -268,7 +268,7 @@ def postOrder():
         {"time":"00:00","status":"สินค้ากำลังจัดส่ง","check":False},
         {"time":"00:00","status":"ผู้ขายกำลังเตรียมสินค้า","check":False},
         {"time":"00:00","status":"ยืนยันคำสั่งซื้อ","check":False}],
-    "status":"ยืนยันคำสั่งซื้อ",
+    "status":"รอผู้ขายยืนยันคำสั่งซื้อ",
     "order_products":request.json["order_products"],
     "orderTime": current_time,
     "Pickup_time":request.json["Pickup_time"],
@@ -291,7 +291,7 @@ def getstoreData(storeid):
 @app.route('/getorder/<string:userid>',methods=['GET'])
 def getorder(userid):
     orders=[]
-    result_orders=db.orders.find({"userid":userid,"status":"ยืนยันคำสั่งซื้อ"})
+    result_orders=db.orders.find({"userid":userid,"status":"รอผู้ขายยืนยันคำสั่งซื้อ"})
     storeid=""
     for x in result_orders:
         storeid=x['store_ID']
@@ -487,13 +487,14 @@ def postcustomerContact():
     adress=request.json["adress"] 
     if db.customer_contract.find_one({'userid':userid}):
         return  {"status":False,"message":"Contact information has been added."}
-    result=db.customer_contract.insert_one(
-   {'userid':userid,
-    'latitude':latitude,
-    'longitude':longitude,
-    'adress':adress})
-    if(result):
-        return  {"status":True,"message":"postCustomerContract Success."}
+    else:
+        result=db.customer_contract.insert_one(
+    {'userid':userid,
+        'latitude':latitude,
+        'longitude':longitude,
+        'adress':adress})
+        if(result):
+            return  {"status":True,"message":"postCustomerContract Success."}
 
 
 
@@ -526,10 +527,10 @@ def getProductList(productList):
 
 
 #get order for mobileApplication by vender 
-@app.route('/GetorderStore/<string:store_ID>',methods=['GET'])
-def GetorderStore(store_ID):
+@app.route('/GetorderStore/<string:store_ID>/<string:status>',methods=['GET'])
+def GetorderStore(store_ID,status):
     orderStore=[]
-    results=db.orders.find({'store_ID':store_ID})
+    results=db.orders.find({'store_ID':store_ID,'status':status})
     productList=''
     if(results):
         for x in results:      
@@ -691,7 +692,7 @@ def getimg(filename):
     return send_file(Files,mimetype="image/jpg")
     
 @app.route('/GetimageReview/<string:filename>')
-def getimg(filename):
+def Getimg(filename):
     Files='uploads/reviews/'+filename
     return send_file(Files,mimetype="image/jpg")
     
