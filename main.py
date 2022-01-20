@@ -59,7 +59,7 @@ def LoginOTP() :
     numberphone=request.json["numberphone"]  
     otp=genotp()
     account_sid = "AC972c43f1b33f1b1fdf504a65febf75a4"
-    auth_token = "ed0da89058bffa43664b027ed44a7737"
+    auth_token = "b570a83b6dc958bdf37bbb21569dadac"
     PHONE_NUMBER="+13868537656"
     client = Client(account_sid, auth_token)
     client.api.account.messages.create(to="+66"+numberphone,from_=PHONE_NUMBER,body="GV-OTP : "+str(otp))
@@ -727,7 +727,9 @@ def Getimg(filename):
 def SendEmail():
     email=request.json['email']
     senEmail(email)
-    return {"message":"sendEmailOk"}
+    return {"message":"เช็ครหัสยืนยันในอีเมลของคุณ"}
+
+
 
 if __name__ == '__main__':
     app.run(debug=True,host="localhost",port=5000)

@@ -8,16 +8,16 @@ def senEmail(email):
     # กำหนดตัวแปรอีเมลผู้ส่ง และ ผู้รับ
     sender = 'goodvendor2022@gmail.com'
     recipient = str(email)
-
+    
     # เนื้อหาของอีเมล
     body = """
     verify code is 
     """
-
+   
   
     header = f'To: { recipient }\n'
 
-    mail = header + body + genotp()
+    mail =  header + body + genotp()
 
     # ตั้งค่าเซิร์ฟเวอร์ด้วยชื่อโฮส และ พอร์ท
     server = smtplib.SMTP('smtp.mailgun.org',587)
