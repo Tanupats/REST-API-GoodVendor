@@ -1,3 +1,5 @@
+
+import email
 from typing import List
 from types import MethodType
 from bson import ObjectId
@@ -12,6 +14,7 @@ from flask_cors import CORS
 from bson.timestamp import Timestamp
 from models.login import genotp,addNumberPhoneUser,genBill
 from models.user import GetuserData
+from models.sendEmail import senEmail
 from config.db import db
 import uuid
 import os
@@ -363,7 +366,7 @@ def getorderTcaking(userid):
 #post store  register for vendor 
 @app.route('/Createstore',methods=['POST'])
 def postStore():
-    storeID=genBill()
+    storeID="GV"+genBill()
     storename=request.json["storename"]
     coordinates=request.json["coordinates"]
     userid=request.json["userid"]
@@ -712,15 +715,22 @@ def upload_image():
 def getimg(filename):
     Files='uploads/products/'+filename
     return send_file(Files,mimetype="image/jpg")
-    
+
+
 @app.route('/GetimageReview/<string:filename>')
 def Getimg(filename):
     Files='uploads/reviews/'+filename
     return send_file(Files,mimetype="image/jpg")
-    
 
+
+@app.route('/sendEmail',methods=['POST'])
+def SendEmail():
+    email=request.json['email']
+    senEmail(email)
+    return {"message":"sendEmailOk"}
 
 if __name__ == '__main__':
     app.run(debug=True,host="localhost",port=5000)
-   
+
+
 
