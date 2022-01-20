@@ -56,7 +56,7 @@ def LoginOTP() :
     numberphone=request.json["numberphone"]  
     otp=genotp()
     account_sid = "AC972c43f1b33f1b1fdf504a65febf75a4"
-    auth_token = "7499fb001a125fc0bd3b0cdc272b81d4"
+    auth_token = "ed0da89058bffa43664b027ed44a7737"
     PHONE_NUMBER="+13868537656"
     client = Client(account_sid, auth_token)
     client.api.account.messages.create(to="+66"+numberphone,from_=PHONE_NUMBER,body="GV-OTP : "+str(otp))
@@ -203,9 +203,9 @@ def Addproduct():
         resp.status_code = 201
         
         db.product.insert_one({    'proname':proname,
-                                   'price': int(Price)     ,
+                                   'price':int(""+Price+"")     ,
                                    'pro_img':photo.filename,
-                                   'stock_quantity':int(quantity),
+                                   'stock_quantity':quantity,
                                    'store_ID':storeId
                                    })
         return resp
@@ -305,6 +305,28 @@ def getorder(userid):
             'status_order':x['status']
          })
     return {"meesage":"getorder success","order":orders}
+
+
+#get orders for web from user status operating  
+@app.route('/getorderAction/<string:userid>/<string:status>',methods=['GET'])
+def getorderAction(userid,status):
+    orders=[]
+    result_orders=db.orders.find({"userid":userid,'status':status})
+    storeid=""
+    for x in result_orders:
+        storeid=x['store_ID']
+        storename=getstoreData(storeid)['name']
+        storeimg=getstoreData(storeid)['store_img']
+        orders.append(
+        {
+            'bill_id': str(x['_id']),
+            'storename':storename,
+            'store_img':storeimg,
+            'status_order':x['status']
+         })
+    return {"meesage":"getorderAction","order":orders}
+
+
 
 
 
