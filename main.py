@@ -1,4 +1,3 @@
-
 import email
 from typing import List
 from types import MethodType
@@ -26,14 +25,16 @@ import os, time
 app = Flask(__name__)
 CORS(app) 
 
+#set API send SMS to Device 
+app.config['ACCOUNT_SID']="AC972c43f1b33f1b1fdf504a65febf75a4"
+app.config['AUTH_TOKEN']="b570a83b6dc958bdf37bbb21569dadac"
+
 #set phat for upload File 
 UPLOAD_FOLDER = 'uploads/reviews'
 UPLOAD_FOLDER_PRODUCT='uploads/products'
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['UPLOAD_FOLDER_PRODUCT']=UPLOAD_FOLDER_PRODUCT
-
-
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
@@ -42,24 +43,22 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-
 today = date.today()
 d1 = today.strftime("%d/%m/%Y")
 now = datetime.now()
-
 
 
 @app.route('/')
 def home():
     return {"message":"Hello World REST API"}
 
-#Login OTP 
+#Login OTP for users 
 @app.route('/LoginOTP',methods=['POST'])
 def LoginOTP() :    
     numberphone=request.json["numberphone"]  
     otp=genotp()
-    account_sid = "AC972c43f1b33f1b1fdf504a65febf75a4"
-    auth_token = "b570a83b6dc958bdf37bbb21569dadac"
+    account_sid = app.config['ACCOUNT_SID']
+    auth_token = app.config['AUTH_TOKEN']
     PHONE_NUMBER="+13868537656"
     client = Client(account_sid, auth_token)
     client.api.account.messages.create(to="+66"+numberphone,from_=PHONE_NUMBER,body="GV-OTP : "+str(otp))
@@ -110,14 +109,14 @@ def Login():
     password=request.json["password"]
     result=db.Users.find_one({'email':username,'password':password})
     results=db.Users.find_one({'numberphone':username,'password':password})
-
     if result:
         return {"message":"Login succes","status":True,
             "userinfo":[
             {
                 "userid": str(result['_id']),
                 "name":result['name'],
-                "lastname":result['lastname']}]         
+                "lastname":result['lastname']}
+                ]         
             } 
 
     if results:
@@ -204,14 +203,15 @@ def Addproduct():
             'status' : True,
             'message' : 'Images successfully uploaded and save dataProduct'})
         resp.status_code = 201
-        
-        db.product.insert_one({    'proname':proname,
-                                   'price':int(""+Price+"")     ,
+        datapro = {    'proname':proname,
+                                   'price':Price,
                                    'pro_img':photo.filename,
                                    'stock_quantity':quantity,
                                    'store_ID':storeId
-                                   })
-        return resp
+                    }
+        result =  db.product.insert_one(datapro)
+        if result:
+            return resp
     else:
         resp = jsonify(errors) 
         
@@ -310,7 +310,7 @@ def getorder(userid):
     return {"meesage":"getorder success","order":orders}
 
 
-#get orders for web from user status operating  
+#get ordersAction for web from user status operating  
 @app.route('/getorderAction/<string:userid>/<string:status>',methods=['GET'])
 def getorderAction(userid,status):
     orders=[]
@@ -328,7 +328,6 @@ def getorderAction(userid,status):
             'status_order':x['status']
          })
     return {"meesage":"getorderAction","order":orders}
-
 
 
 
@@ -378,7 +377,8 @@ def postStore():
          "coordinates":int(coordinates),
          "userid":userid,
          "lat":lat,
-         "long":longs})
+         "long":longs
+         })
     if(result):
         return {"message":"add store your success","status":True}
 
@@ -446,7 +446,7 @@ def DeleteLink(LinkID):
 
 
 
-#getproduct from link store sale for WebApp
+#getproduct from link store sale for WebApp 
 @app.route('/GetProductShop/<string:linkStoreID>',methods=['GET'])
 def GetProductShop(linkStoreID):
     products=[]
@@ -473,26 +473,26 @@ def GetProductShop(linkStoreID):
 @app.route('/updateStatusOrder/<string:bill_id>/<string:status>',methods=['PUT'])
 def updateStatusOrder(bill_id,status):  
     current_time = now.strftime("%H:%M:%S")
-    print(current_time)
+    
     if status == 'order_confirmation':
         db.orders.update_one(
                 {
                 "_id":ObjectId(bill_id),"status_order.status":"ยืนยันคำสั่งซื้อ"},
                 {"$set":{"status":"ยืนยันคำสั่งซื้อ","status_order.$.check":True,"status_order.$.time":current_time} }
                 )
-    elif status =='2':
+    elif status =='Preparing':
          db.orders.update_one(
                 {
                 "_id":ObjectId(bill_id),"status_order.status":"ผู้ขายกำลังเตรียมสินค้า"},
                 {"$set":{"status":"ผู้ขายกำลังเตรียมสินค้า","status_order.$.check":True,"status_order.$.time":current_time} }
                 )
-    elif status =='3':
+    elif status =='shipping':
          db.orders.update_one(
                 {
                 "_id":ObjectId(bill_id),"status_order.status":"สินค้ากำลังจัดส่ง"},
                 {"$set":{"status":"สินค้ากำลังจัดส่ง","status_order.$.check":True,"status_order.$.time":current_time} }
                 )
-    elif status =='4':
+    elif status =='Successful_delivery':
          db.orders.update_one(
                 {
                 "_id":ObjectId(bill_id),"status_order.status":"จัดส่งสำเร็จ"},
@@ -514,7 +514,7 @@ def postcustomerContact():
         return  {"status":False,"message":"Contact information has been added."}
     else:
         result=db.customer_contract.insert_one(
-    {'userid':userid,
+        {'userid':userid,
         'latitude':latitude,
         'longitude':longitude,
         'adress':adress})
@@ -573,7 +573,9 @@ def GetorderStore(store_ID,status):
                 'products':getProductList(productList),
                 'ordertime':x['orderTime']       
                 })         
-        return jsonify(orderStore)  
+        return jsonify(orderStore) 
+    
+           
 
 
 
@@ -661,7 +663,6 @@ def updateReview():
     update=db.Rateting.update_one(query,newvalue)
     if update:
         return {"messasge":"update your review succes orderID is "+orderID}
-
 
 
 
