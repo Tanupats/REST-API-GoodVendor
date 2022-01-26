@@ -1,13 +1,11 @@
-import email
-from typing import List
-from types import MethodType
+
 from bson import ObjectId
+from fastapi import requests
 from flask.helpers import send_file
 import pymongo,json
 from flask import Flask,request,jsonify
 from pymongo import results
 from pymongo import response
-from pymongo.message import _EMPTY
 from twilio.rest import Client
 from flask_cors import CORS
 from bson.timestamp import Timestamp
@@ -21,6 +19,9 @@ from werkzeug.utils import secure_filename
 import urllib.request
 from datetime import date
 from datetime import datetime
+import requests
+import json
+
 import os, time
 app = Flask(__name__)
 CORS(app) 
@@ -729,6 +730,33 @@ def SendEmail():
     email=request.json['email']
     senEmail(email)
     return {"message":"เช็ครหัสยืนยันในอีเมลของคุณ"}
+
+
+@app.route('/Notification',methods=['POST'])
+def sendNoti():
+    serverToken='AAAAyUVAl84:APA91bESa6gqr04uti79giLDhHOietQrqmMu0PjE_wlQ2qAJu9MQzzT8a1aBUcaQzF_ZijfJmZTwnIpMShxLZotXpkIlH3h06GibuBji-Y62ZBsETs7jmuopSHq2e2iVwCADExt4Rvh1'
+    deviceToken ='fVW-n6b9QiuRdEr889hnQ7:APA91bHvCA9AP4cX3n1DJM0A2Xz6BcijIPLcl4miul6pBOtfYDXPwYLUCqY0QTou27MTHtHag0kCm_aSi4SrNgbnh48nFoZoyh_M-gO1lHxEE5OQBNesxqTUxwnRzXIeC5iLjInZMtSr'
+    
+    headers={
+        'Content-Type': 'application/json',
+        'Authorization': 'key=' + serverToken,
+    }
+    body={
+    'body':
+        {
+          'notification': {'title': 'Sending push form python script',
+                            'body': 'New Message'
+                            },
+          'to':
+              deviceToken,
+          'priority': 'high',
+          #'data': {'click_action':'FLUTTER_NOTIFICATION_CLICK'},
+        }
+    }
+    response = requests.post("https://fcm.googleapis.com/fcm/send",headers = headers, data=json.dumps(body['body']))
+    print(response.status_code)
+    if(response):
+        return {"massage":"sendNotification OK"}
 
 
 
