@@ -201,7 +201,7 @@ def Addproduct():
             'pro_img' : photo.filename,
             'status' : True,
             'message' : 'Images successfully uploaded and save dataProduct'})
-        resp.status_code = 201
+        resp.status_code = 200
         datapro = {    'proname':proname,
                                    'price':Price,
                                    'pro_img':photo.filename,
@@ -394,7 +394,8 @@ def postStore():
          "coordinates":int(coordinates),
          "userid":userid,
          "lat":lat,
-         "long":longs
+         "long":longs,
+         "token":""
          })
     if(result):
         return {"message":"add store your success","status":True}
@@ -750,7 +751,7 @@ def SendEmail():
 
 @app.route('/gettokens/<string:storeID>',methods=['GET'])
 def gettokens(storeID):
-    result=db.store.find({'storeID':storeID})
+    result=db.store.find({'store_ID':storeID})
     Token=""
     for a in result:
         Token=a['token']
