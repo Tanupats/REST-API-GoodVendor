@@ -1,6 +1,6 @@
 
+
 from bson import ObjectId
-from fastapi import requests
 from flask.helpers import send_file
 import pymongo,json
 from flask import Flask,request,jsonify
@@ -19,8 +19,6 @@ from werkzeug.utils import secure_filename
 import urllib.request
 from datetime import date
 from datetime import datetime
-import requests
-import json
 
 import os, time
 app = Flask(__name__)
@@ -258,14 +256,29 @@ def Updateproduct(proID):
 
 
 
+
+
+@app.route('/Notification',methods=['POST'])
+def sendNotification():
+    storeID="GV5389" 
+    response=fcm.sendNotification(storeID)
+    if(response==200):
+        return {"massage":"sendNotification success"}
+
+#send notification 
+import fcmManager as fcm
+
+
+
 #post ordrs from user 
 @app.route('/post_order',methods=['POST'])
 def postOrder():
     Date=d1
     current_time = now.strftime("%H:%M:%S")
+    storeID=request.json["store_ID"]
     orderlist={
     "userid":request.json["userid"],
-    "store_ID":request.json["store_ID"],
+    "store_ID":storeID,
     "date":Date,
     "status_order":[
         {"time":"00:00","status":"จัดส่งสำเร็จ","check":False},
@@ -280,7 +293,10 @@ def postOrder():
     }
     result=db.orders.insert_one(orderlist)
     if result:
-        return {"message":"post order your success"}
+         response=fcm.sendNotification(storeID)
+         if(response==200):
+            return {"message":"post order your success"}
+
 
 
 def getstoreData(storeid):
@@ -627,7 +643,7 @@ def SaveReview():
             'review_img' : photo.filename,
             'status' : True,
             'message' : 'save reviews is billID'+order_id})
-        resp.status_code = 201
+        resp.status_code = 200
         db.Rateting.insert_one({'orderID':order_id,'img_upload':photo.filename,'rate_detail':rate_detail,'value':int(value)})
         return resp
     else:
@@ -732,31 +748,34 @@ def SendEmail():
     return {"message":"เช็ครหัสยืนยันในอีเมลของคุณ"}
 
 
-@app.route('/Notification',methods=['POST'])
-def sendNoti():
-    serverToken='AAAAyUVAl84:APA91bESa6gqr04uti79giLDhHOietQrqmMu0PjE_wlQ2qAJu9MQzzT8a1aBUcaQzF_ZijfJmZTwnIpMShxLZotXpkIlH3h06GibuBji-Y62ZBsETs7jmuopSHq2e2iVwCADExt4Rvh1'
-    deviceToken ='fVW-n6b9QiuRdEr889hnQ7:APA91bHvCA9AP4cX3n1DJM0A2Xz6BcijIPLcl4miul6pBOtfYDXPwYLUCqY0QTou27MTHtHag0kCm_aSi4SrNgbnh48nFoZoyh_M-gO1lHxEE5OQBNesxqTUxwnRzXIeC5iLjInZMtSr'
-    
-    headers={
-        'Content-Type': 'application/json',
-        'Authorization': 'key=' + serverToken,
+@app.route('/gettokens/<string:storeID>',methods=['GET'])
+def gettokens(storeID):
+    result=db.store.find({'storeID':storeID})
+    Token=""
+    for a in result:
+        Token=a['token']
+    if Token=="":
+        return {"message":"token is Empty","status":False}
+    else:
+        return {"message":"gettoken ok","status":True}
+
+
+#update token for device Mobile App.
+@app.route('/updateTokens',methods=['PUT'])
+def updateToken():
+    storeID=request.json["store_ID"]
+    token=request.json["token"]
+    query={'store_ID':storeID}
+    value={
+        "$set":
+            {'token':token}
     }
-    body={
-    'body':
-        {
-          'notification': {'title': 'Sending push form python script',
-                            'body': 'New Message'
-                            },
-          'to':
-              deviceToken,
-          'priority': 'high',
-          #'data': {'click_action':'FLUTTER_NOTIFICATION_CLICK'},
-        }
-    }
-    response = requests.post("https://fcm.googleapis.com/fcm/send",headers = headers, data=json.dumps(body['body']))
-    print(response.status_code)
-    if(response):
-        return {"massage":"sendNotification OK"}
+    update=db.store.update_one(query,value)
+    if(update):
+        return {"message":"updated tokens storeID is "+storeID}
+ 
+
+
 
 
 
