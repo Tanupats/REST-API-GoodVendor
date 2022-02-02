@@ -115,7 +115,9 @@ def Login():
             {
                 "userid": str(result['_id']),
                 "name":result['name'],
-                "lastname":result['lastname']}
+                "lastname":result['lastname'],
+                "User_Type":result['User_Type']
+                }
                 ]         
             } 
 
@@ -802,9 +804,19 @@ def Getshops():
             })
     return jsonify(output)     
 
-@app.route('/confirmStore/<string:id>')
-def confirmstore():
-    return {}
+
+@app.route('/confirmStore/<string:storeID>')
+def confirmstore(storeID):
+    query={'store_ID':storeID}
+    value={
+        "$set":
+            {'status_confirm':True}
+    }
+    update=db.store.update_one(query,value)
+    if(update):
+        return {"message":"updated statusconfirm success"}
+ 
+    
 
 if __name__ == '__main__':
     app.run(debug=True,host="localhost",port=5000)
