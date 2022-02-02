@@ -24,6 +24,7 @@ import os, time
 app = Flask(__name__)
 CORS(app) 
 
+
 #set API send SMS to Device 
 app.config['ACCOUNT_SID']="AC972c43f1b33f1b1fdf504a65febf75a4"
 app.config['AUTH_TOKEN']="b570a83b6dc958bdf37bbb21569dadac"
@@ -776,9 +777,34 @@ def updateToken():
         return {"message":"updated tokens storeID is "+storeID}
  
 
+#addmin 
+@app.route('/GetAllshops')
+def Getshops():
+    output=[]
+    _id=""
+    result = db.store.find({})
+    for a in result:
+        _id=a['userid']
+        userdetail= GetuserData(_id)
+        output.append({
+            'author':
+                {
+                    'avatar':'',
+                    'name':userdetail['name'],
+                    'email':userdetail['email']
+                },
+                    'func': {
+                    'job': a['storename'],
+                    'department': a['store_ID'],
+			            },
+			'status': a['status_confirm'],
+			'employed':a['registration_date']           
+            })
+    return jsonify(output)     
 
-
-
+@app.route('/confirmStore/<string:id>')
+def confirmstore():
+    return {}
 
 if __name__ == '__main__':
     app.run(debug=True,host="localhost",port=5000)
