@@ -871,7 +871,7 @@ def confirmstore(storeID):
     }
     update=db.store.update_one(query,value)
     if(update):
-        return {"message":"updated statusconfirm success"}
+        return {"message":"updated statusconfirm success","status":True}
 
 
 
