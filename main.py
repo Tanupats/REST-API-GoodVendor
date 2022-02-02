@@ -111,14 +111,13 @@ def Login():
     results=db.Users.find_one({'numberphone':username,'password':password})
     if result:
         return {"message":"Login succes","status":True,
-            "userinfo":[
-            {
-                "userid": str(result['_id']),
-                "name":result['name'],
-                "lastname":result['lastname'],
-                "User_Type":result['User_Type']
-                }
-                ]         
+            "userinfo":
+                {
+                    "userid": str(result['_id']),
+                    "name":result['name'],
+                    "lastname":result['lastname'],
+                    "User_Type":result['User_Type']
+                 }                  
             } 
 
     if results:
@@ -764,6 +763,7 @@ def gettokens(storeID):
         return {"message":"gettoken ok","status":True}
 
 
+
 #update token for device Mobile App.
 @app.route('/updateTokens',methods=['PUT'])
 def updateToken():
@@ -779,9 +779,12 @@ def updateToken():
         return {"message":"updated tokens storeID is "+storeID}
  
 
-#addmin 
-@app.route('/GetAllshops')
-def Getshops():
+
+
+
+#ร้องขออนุมัติ 
+@app.route('/GetAllshops',methods=['GET'])
+def GetAllshops():
     output=[]
     _id=""
     result = db.store.find({})
@@ -801,8 +804,62 @@ def Getshops():
 			            },
 			'status': a['status_confirm'],
 			'employed':a['registration_date']           
-            })
+                })
     return jsonify(output)     
+
+
+
+#อนุมัติ 
+@app.route('/Getapproved',methods=['GET'])
+def Getapproved():
+    output=[]
+    _id=""
+    result = db.store.find({'status_confirm':True})
+    for a in result:
+        _id=a['userid']
+        userdetail= GetuserData(_id)
+        output.append({
+            'author':
+                {
+                    'avatar':'',
+                    'name':userdetail['name'],
+                    'email':userdetail['email']
+                },
+                    'func': {
+                    'job': a['storename'],
+                    'department': a['store_ID'],
+			            },
+			'status': a['status_confirm'],
+			'employed':a['registration_date']           
+            })
+    return jsonify(output) 
+
+
+
+#ยังไม่อนุมัติ 
+@app.route('/Getdisapproved',methods=['GET'])
+def Getdisapproved():
+    output=[]
+    _id=""
+    result = db.store.find({'status_confirm':False})
+    for a in result:
+        _id=a['userid']
+        userdetail= GetuserData(_id)
+        output.append({
+            'author':
+                {
+                    'avatar':'',
+                    'name':userdetail['name'],
+                    'email':userdetail['email']
+                },
+                    'func': {
+                    'job': a['storename'],
+                    'department': a['store_ID'],
+			            },
+			'status': a['status_confirm'],
+			'employed':a['registration_date']           
+            })
+    return jsonify(output) 
 
 
 @app.route('/confirmStore/<string:storeID>')
@@ -815,8 +872,8 @@ def confirmstore(storeID):
     update=db.store.update_one(query,value)
     if(update):
         return {"message":"updated statusconfirm success"}
- 
-    
+
+
 
 if __name__ == '__main__':
     app.run(debug=True,host="localhost",port=5000)
