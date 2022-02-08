@@ -602,7 +602,59 @@ def GetorderStore(store_ID,status):
                 })         
         return jsonify(orderStore) 
     
-           
+
+#getorder prepare and delivery
+@app.route('/GetorderDelivery/<string:store_ID>',methods=['GET'])
+def GetorderDelivery(store_ID):
+
+    orderStore=[]
+    results=db.orders.find({'store_ID':store_ID,'status':'ผู้ขายกำลังเตรียมสินค้า'})
+    resultspre=db.orders.find({'store_ID':store_ID,'status':'สินค้ากำลังจัดส่ง'})
+    
+    productListpre=''
+    if(resultspre):
+        for x in resultspre:      
+            productListpre=x['order_products']
+            usersdata=GetuserData(x['userid'])
+            orderStore.append({
+                'bill_id': str(x['_id']) , 
+                'Pickup_time':x['Pickup_time'],
+                'note':x['note'],               
+                'name':usersdata['name'],
+                'numberphone':usersdata['numberphone'],
+                'adress':usersdata['adress'],
+                'lat':usersdata['lat'],
+                'lang':usersdata['lang'],
+                'products':getProductList(productListpre),
+                'ordertime':x['orderTime'],
+                'status':x['status']       
+                })  
+
+
+    productList=''
+    if(results):
+        for x in results:      
+            productList=x['order_products']
+            usersdata=GetuserData(x['userid'])
+            orderStore.append({
+                'bill_id': str(x['_id']) , 
+                'Pickup_time':x['Pickup_time'],
+                'note':x['note'],               
+                'name':usersdata['name'],
+                'numberphone':usersdata['numberphone'],
+                'adress':usersdata['adress'],
+                'lat':usersdata['lat'],
+                'lang':usersdata['lang'],
+                'products':getProductList(productList),
+                'ordertime':x['orderTime'],
+                'status':x['status']       
+                }) 
+
+          
+    
+        return jsonify(orderStore) 
+    
+
 
 
 
