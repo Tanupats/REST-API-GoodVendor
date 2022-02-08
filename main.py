@@ -1,5 +1,5 @@
 
-
+from math import fabs
 from bson import ObjectId
 from flask.helpers import send_file
 import pymongo,json
@@ -27,7 +27,7 @@ CORS(app)
 
 #set API send SMS to Device 
 app.config['ACCOUNT_SID']="AC972c43f1b33f1b1fdf504a65febf75a4"
-app.config['AUTH_TOKEN']="b570a83b6dc958bdf37bbb21569dadac"
+app.config['AUTH_TOKEN']="9731cd732bdbe5660d15a3a5440a4962"
 
 #set phat for upload File 
 UPLOAD_FOLDER = 'uploads/reviews'
@@ -117,7 +117,8 @@ def Login():
                     "name":result['name'],
                     "lastname":result['lastname'],
                     "User_Type":result['User_Type']
-                 }                  
+                 }   
+                          
             } 
 
     if results:
@@ -154,9 +155,12 @@ def Getproduct(store_ID):
                           "product_name":x["proname"],
                           "product_price":x["price"],
                           "product_img":x["pro_img"],
-                          "number":x["stock_quantity"]})   
+                          "number":x["stock_quantity"],
+                          "value":False
+                          })   
     return jsonify(product)
-     
+
+
 
 #add product from store
 @app.route('/addproduct',methods = ['GET','POST'])
@@ -165,10 +169,8 @@ def Addproduct():
     quantity=request.form.get("stock_quantity")
     proname=request.form.get("proname")
     storeId=request.form.get("store_ID")
-    if db.product.find_one({'proname':proname}):
-        return {"messags":"product name is Alerdy"}
-    else:
-        if 'image' not in request.files:
+  
+    if 'image' not in request.files:
             resp = jsonify({
                 'status' : False,
                 'message' : 'Image is not defined'})
@@ -390,6 +392,7 @@ def postStore():
     userid=request.json["userid"]
     lat=request.json["lat"]
     longs=request.json["long"]
+    token=request.json["token"]
     result=db.store.insert_one({
          "store_ID":storeID,
          "storename":storename,
@@ -397,7 +400,9 @@ def postStore():
          "userid":userid,
          "lat":lat,
          "long":longs,
-         "token":""
+         "store_img":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFylME2j0-3Lllfe1N6nGX5qjgYBHHXTbojA&usqp=CAU",
+         "token":token,
+         "registration_date":d1
          })
     if(result):
         return {"message":"add store your success","status":True}
