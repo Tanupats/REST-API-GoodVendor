@@ -27,7 +27,8 @@ CORS(app)
 
 #set API send SMS to Device 
 app.config['ACCOUNT_SID']="AC972c43f1b33f1b1fdf504a65febf75a4"
-app.config['AUTH_TOKEN']="9731cd732bdbe5660d15a3a5440a4962"
+app.config['AUTH_TOKEN']="76d33a1c032729b5b1e62f593e36728f"
+
 
 #set phat for upload File 
 UPLOAD_FOLDER = 'uploads/reviews'
@@ -63,7 +64,7 @@ def LoginOTP() :
     client = Client(account_sid, auth_token)
     client.api.account.messages.create(to="+66"+numberphone,from_=PHONE_NUMBER,body="GV-OTP : "+str(otp))
     addNumberPhoneUser(numberphone,otp)
-    return {"message":"please check OTP SentTo Your mobilephone +66"+numberphone}
+    return {"message":"ตรวจสอบรหัสยืนยัน OTP ที่ส่งไปยังหมายเลขโทรศัพท์ +66"+numberphone}
 
 
 #verify OTP 
@@ -402,7 +403,8 @@ def postStore():
          "long":longs,
          "store_img":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFylME2j0-3Lllfe1N6nGX5qjgYBHHXTbojA&usqp=CAU",
          "token":token,
-         "registration_date":d1
+         "registration_date":d1,
+         "status_confirm":False
          })
     if(result):
         return {"message":"add store your success","status":True}
@@ -795,7 +797,7 @@ def GetAllshops():
     result = db.store.find({})
     for a in result:
         _id=a['userid']
-        userdetail= GetuserData(_id)
+        userdetail = GetuserData(_id)
         output.append({
             'author':
                 {
@@ -810,6 +812,7 @@ def GetAllshops():
 			'status': a['status_confirm'],
 			'employed':a['registration_date']           
                 })
+            
     return jsonify(output)     
 
 
