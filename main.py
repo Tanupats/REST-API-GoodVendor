@@ -1,4 +1,6 @@
 
+
+
 from math import fabs
 from bson import ObjectId
 from flask.helpers import send_file
@@ -89,6 +91,7 @@ def Adduser():
         name=request.json["name"]
         lastname=request.json["lastname"]
         phoneNumber=request.json["numberphone"]
+        userType=request.json["User_Type"]
         if db.Users.find_one({'numberphone':phoneNumber}):
             return {"messages":"phoneNumber has registered","status":False}
         else:        
@@ -97,7 +100,9 @@ def Adduser():
             "password":password,
             "name":name,
             "lastname":lastname,
-            "numberphone":phoneNumber})
+            "numberphone":phoneNumber,
+            "User_Type":userType        
+            })
             if result:
                 return {"messages":"Successful registration","status":True,"userid":str(result.inserted_id)}
 
@@ -841,32 +846,34 @@ def updateToken():
 
 
 
-#ร้องขออนุมัติ 
+#คำร้องขออนุมัติเปิดร้านค้า goodvendor 
 @app.route('/GetAllshops',methods=['GET'])
-def GetAllshops():
+def GetAll():
     output=[]
     _id=""
     result = db.store.find({})
-    for a in result:
-        _id=a['userid']
-        userdetail = GetuserData(_id)
+    for st in result:
+        _id=st['userid']
+        userdata=GetuserData(_id)       
         output.append({
             'author':
                 {
                     'avatar':'',
-                    'name':userdetail['name'],
-                    'email':userdetail['email']
+                    'name':userdata['name'],
+                    'email':userdata['email']
                 },
-                    'func': {
-                    'job': a['storename'],
-                    'department': a['store_ID'],
+                'func':
+                     {
+                    'job': st['storename'],
+                    'department': st['store_ID'],
 			            },
-			'status': a['status_confirm'],
-			'employed':a['registration_date']           
-                })
-            
-    return jsonify(output)     
+                        'status':  st['status'],
+                        'employed':st['registration_date']
 
+        })
+
+    print(output) 
+    return jsonify(output)    
 
 
 #อนุมัติ 
@@ -874,7 +881,7 @@ def GetAllshops():
 def Getapproved():
     output=[]
     _id=""
-    result = db.store.find({'status_confirm':True})
+    result = db.store.find({'status':True})
     for a in result:
         _id=a['userid']
         userdetail= GetuserData(_id)
@@ -889,7 +896,7 @@ def Getapproved():
                     'job': a['storename'],
                     'department': a['store_ID'],
 			            },
-			'status': a['status_confirm'],
+			'status': a['status'],
 			'employed':a['registration_date']           
             })
     return jsonify(output) 
@@ -901,7 +908,7 @@ def Getapproved():
 def Getdisapproved():
     output=[]
     _id=""
-    result = db.store.find({'status_confirm':False})
+    result = db.store.find({'status':False})
     for a in result:
         _id=a['userid']
         userdetail= GetuserData(_id)
@@ -916,23 +923,43 @@ def Getdisapproved():
                     'job': a['storename'],
                     'department': a['store_ID'],
 			            },
-			'status': a['status_confirm'],
+			'status': a['status'],
 			'employed':a['registration_date']           
             })
     return jsonify(output) 
 
 
-@app.route('/confirmStore/<string:storeID>')
+
+#อัตเดตสถาน่ะ ร้านค้าเป็นอนุอัติ 
+@app.route('/confirmStore/<string:storeID>',methods=['PUT'])
 def confirmstore(storeID):
     query={'store_ID':storeID}
     value={
         "$set":
-            {'status_confirm':True}
+            {'status':True}
     }
     update=db.store.update_one(query,value)
     if(update):
         return {"message":"updated statusconfirm success","status":True}
 
+
+
+#ดึงข้อมูลรายละเอียดร้านค้า 
+@app.route('/shopDetail/<string:storeID>',methods=['GET'])
+def getShop(storeID):
+    output={}
+    result = db.store.find({'store_ID':storeID})   
+    for storedata in result:
+        output={
+            'storename':storedata['storename'], 
+            'store_ID':storedata['store_ID'],
+            'coordinates':storedata['coordinates'],
+            'lat':storedata['lat'],
+            'long':storedata['long'],
+            'store_img':storedata['store_img'],
+            'registration_date':storedata['registration_date']
+            }                      
+    return {"message":"get data shop","storeData":output}
 
 
 if __name__ == '__main__':
