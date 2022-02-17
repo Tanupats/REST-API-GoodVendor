@@ -1,6 +1,7 @@
 
 
 
+from inspect import stack
 from math import fabs
 from bson import ObjectId
 from flask.helpers import send_file
@@ -846,12 +847,12 @@ def updateToken():
 
 
 
-#คำร้องขออนุมัติเปิดร้านค้า goodvendor 
+#คำร้องขออนุมัติเปิดร้านค้าทั้งหมด 
 @app.route('/GetAllshops',methods=['GET'])
 def GetAll():
     output=[]
     _id=""
-    result = db.store.find({})
+    result = db.store.find({'status_confirm':'ยื่นคำร้อง'})
     for st in result:
         _id=st['userid']
         userdata=GetuserData(_id)       
@@ -867,7 +868,7 @@ def GetAll():
                     'job': st['storename'],
                     'department': st['store_ID'],
 			            },
-                        'status':  st['status'],
+                        'status_confirm': st['status_confirm'],
                         'employed':st['registration_date']
 
         })
