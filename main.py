@@ -949,9 +949,15 @@ def confirmstore(storeID):
 @app.route('/shopDetail/<string:storeID>',methods=['GET'])
 def getShop(storeID):
     output={}
+    _id=""
     result = db.store.find({'store_ID':storeID})   
     for storedata in result:
+        _id=storedata['userid']
+        userdetail= GetuserData(_id)
         output={
+            'name':userdetail['name'],
+            'email':userdetail['email'],
+            'numberphone':userdetail['numberphone'],
             'storename':storedata['storename'], 
             'store_ID':storedata['store_ID'],
             'coordinates':storedata['coordinates'],
