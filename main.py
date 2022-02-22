@@ -410,7 +410,7 @@ def postStore():
          "store_img":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFylME2j0-3Lllfe1N6nGX5qjgYBHHXTbojA&usqp=CAU",
          "token":token,
          "registration_date":d1,
-         "status_confirm":False
+         "status_confirm":"ยื่นคำร้อง"
          })
     if(result):
         return {"message":"add store your success","status":True}
@@ -422,12 +422,13 @@ def getstore(userid):
     mystore={}
     result=db.store.find({'userid':userid})
     for x in result:
-        mystore={"storeID":x['store_ID'],
+        mystore={       "storeID":x['store_ID'],
                         "id":str(x['_id']),
                         "storename":x['storename'],
-                        "store_img":x['store_img']
+                        "store_img":x['store_img'],
+                        "status_confirm":x['status_confirm']
                         }
-    return {"message":"getdata mystore success","mystore":mystore}
+    return jsonify(mystore)
 
  
 #create_link_store for mobile Application 
@@ -937,7 +938,7 @@ def confirmstore(storeID):
     query={'store_ID':storeID}
     value={
         "$set":
-            {'status':True}
+            {'status_confirm':True}
     }
     update=db.store.update_one(query,value)
     if(update):
