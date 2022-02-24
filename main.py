@@ -410,7 +410,7 @@ def postStore():
          "store_img":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFylME2j0-3Lllfe1N6nGX5qjgYBHHXTbojA&usqp=CAU",
          "token":token,
          "registration_date":d1,
-         "status_confirm":"ยื่นคำร้อง"
+         "status_confirm":False
          })
     if(result):
         return {"message":"add store your success","status":True}
@@ -878,12 +878,13 @@ def GetAll():
     return jsonify(output)    
 
 
-#อนุมัติ 
+
+#สถาน่ะอนุมัติแล้ว
 @app.route('/Getapproved',methods=['GET'])
 def Getapproved():
     output=[]
     _id=""
-    result = db.store.find({'status':True})
+    result = db.store.find({'status_confirm':True})
     for a in result:
         _id=a['userid']
         userdetail= GetuserData(_id)
@@ -898,19 +899,19 @@ def Getapproved():
                     'job': a['storename'],
                     'department': a['store_ID'],
 			            },
-			'status': a['status'],
+			'status': a['status_confirm'],
 			'employed':a['registration_date']           
             })
     return jsonify(output) 
 
 
 
-#ยังไม่อนุมัติ 
+#สถาน่ะยังไม่อนุมัติ 
 @app.route('/Getdisapproved',methods=['GET'])
 def Getdisapproved():
     output=[]
     _id=""
-    result = db.store.find({'status':False})
+    result = db.store.find({'status_confirm':False})
     for a in result:
         _id=a['userid']
         userdetail= GetuserData(_id)
@@ -925,7 +926,7 @@ def Getdisapproved():
                     'job': a['storename'],
                     'department': a['store_ID'],
 			            },
-			'status': a['status'],
+			'status': a['status_confirm'],
 			'employed':a['registration_date']           
             })
     return jsonify(output) 
