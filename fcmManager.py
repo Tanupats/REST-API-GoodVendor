@@ -2,7 +2,7 @@ import requests
 import json
 from config.db import db
 
-def sendNotification(storeID):
+def sendNotification(storeID,title,body):
 
     deviceToken=""
     result=db.store.find({'store_ID':storeID}) 
@@ -19,8 +19,8 @@ def sendNotification(storeID):
     body={
     'body':
         {
-          'notification': { 'title': 'แจ้งเตือนคำสั่งซื้อสินค้าใหม่ตอนนี้',
-                            'body': 'สถาน่ะรอผู้ขายยืนยันคำสั่งซื้อ'
+          'notification': { 'title': title,
+                            'body': body
                           },
           "data": {"click_action":"FLUTTER_NOTIFICATION_CLICK"},
           'to':deviceToken,

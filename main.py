@@ -304,7 +304,9 @@ def postOrder():
     }
     result=db.orders.insert_one(orderlist)
     if result:
-         response=fcm.sendNotification(storeID)
+         title='แจ้งเตือนคำสั่งซื้อสินค้าใหม่ตอนนี้'
+         body='สถาน่ะรอผู้ขายยืนยันคำสั่งซื้อ'
+         response=fcm.sendNotification(storeID,title,body)
          if(response==200):
             return {"message":"post order your success"}
 
@@ -410,7 +412,7 @@ def postStore():
          "store_img":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFylME2j0-3Lllfe1N6nGX5qjgYBHHXTbojA&usqp=CAU",
          "token":token,
          "registration_date":d1,
-         "status_confirm":False
+         "status_confirm":"ยื่นคำร้อง"
          })
     if(result):
         return {"message":"add store your success","status":True}
@@ -933,7 +935,7 @@ def Getdisapproved():
 
 
 
-#อัตเดตสถาน่ะ ร้านค้าเป็นอนุอัติ 
+#อัตเดตสถาน่ะ ร้านค้าเป็นอนุอัติ และส่งแจ้งเตือนไป App mobile 
 @app.route('/confirmStore/<string:storeID>',methods=['PUT'])
 def confirmstore(storeID):
     query={'store_ID':storeID}
@@ -943,7 +945,11 @@ def confirmstore(storeID):
     }
     update=db.store.update_one(query,value)
     if(update):
-        return {"message":"updated statusconfirm success","status":True}
+         title='แจ้งเตือนผลการลงทะเบียนร้านค้า GoodVendor'
+         body='ได้รับการอนุมติเปิดร้านเรียบร้อยแล่้ว'
+         response=fcm.sendNotification(storeID,title,body)
+         if(response==200):  
+            return {"message":"updated statusconfirm success","status":True}
 
 
 
