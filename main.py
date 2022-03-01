@@ -665,8 +665,6 @@ def GetorderDelivery(store_ID):
     
 
 
-
-
 #save review score 
 @app.route('/SaveReview',methods = ['GET','POST'])
 def SaveReview():
@@ -847,9 +845,6 @@ def updateToken():
         return {"message":"updated tokens storeID is "+storeID}
  
 
-
-
-
 #คำร้องขออนุมัติเปิดร้านค้าทั้งหมด 
 @app.route('/GetAllshops',methods=['GET'])
 def GetAll():
@@ -876,7 +871,6 @@ def GetAll():
 
         })
 
-    print(output) 
     return jsonify(output)    
 
 
@@ -945,8 +939,8 @@ def confirmstore(storeID):
     }
     update=db.store.update_one(query,value)
     if(update):
-         title='แจ้งเตือนผลการลงทะเบียนร้านค้า GoodVendor'
-         body='ได้รับการอนุมติเปิดร้านเรียบร้อยแล่้ว'
+         title='แจ้งเตือนผลการลงทะเบียนร้านค้ากับ GoodVendor'
+         body='ได้รับการอนุมติเปิดร้านเรียบร้อยแล้ว'
          response=fcm.sendNotification(storeID,title,body)
          if(response==200):  
             return {"message":"updated statusconfirm success","status":True}
