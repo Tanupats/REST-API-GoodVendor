@@ -287,6 +287,7 @@ def postOrder():
     Date=d1
     current_time = now.strftime("%H:%M:%S")
     storeID=request.json["store_ID"]
+    total=request.json["total"]
     orderlist={
     "userid":request.json["userid"],
     "store_ID":storeID,
@@ -300,7 +301,8 @@ def postOrder():
     "order_products":request.json["order_products"],
     "orderTime": current_time,
     "Pickup_time":request.json["Pickup_time"],
-    "note":request.json["note"]
+    "note":request.json["note"],
+    "total":total
     }
     result=db.orders.insert_one(orderlist)
     if result:
@@ -418,17 +420,21 @@ def postStore():
         return {"message":"add store your success","status":True}
 
 
-#get Mystore  for mobile Application 
+#get Mystore  for mobile Application  
 @app.route('/getstore/<string:userid>',methods=['GET'])
 def getstore(userid):
     mystore={}
+    status=''
     result=db.store.find({'userid':userid})
     for x in result:
+        if x['status_confirm']=='ยื่นคำร้อง':
+            status=False
+        else:status=x['status_confirm'] 
         mystore={       "storeID":x['store_ID'],
                         "id":str(x['_id']),
                         "storename":x['storename'],
                         "store_img":x['store_img'],
-                        "status_confirm":x['status_confirm']
+                        "status_confirm":status
                         }
     return jsonify(mystore)
 
