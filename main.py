@@ -266,19 +266,8 @@ def Updateproduct(proID):
         return {"messages":"update prodct success ","status":True}
 
 
-
-
-
-@app.route('/Notification',methods=['POST'])
-def sendNotification():
-    storeID="GV5389" 
-    response=fcm.sendNotification(storeID)
-    if(response==200):
-        return {"massage":"sendNotification success"}
-
 #send notification 
 import fcmManager as fcm
-
 
 
 #post ordrs from user 
