@@ -31,7 +31,7 @@ CORS(app)
 #set API send SMS to Device 
 app.config['ACCOUNT_SID']="AC972c43f1b33f1b1fdf504a65febf75a4"
 app.config['AUTH_TOKEN']="76d33a1c032729b5b1e62f593e36728f"
-
+app.config['PHONE_NUMBER']="+13868537656"
 
 #set phat for upload File 
 UPLOAD_FOLDER = 'uploads/reviews'
@@ -52,18 +52,15 @@ d1 = today.strftime("%d/%m/%Y")
 now = datetime.now()
 
 
-@app.route('/')
-def home():
-    return {"message":"Hello World REST API"}
 
 #Login OTP for users 
-@app.route('/LoginOTP',methods=['POST'])
+@app.route('/api/LoginOTP',methods=['POST'])
 def LoginOTP() :    
     numberphone=request.json["numberphone"]  
     otp=genotp()
     account_sid = app.config['ACCOUNT_SID']
     auth_token = app.config['AUTH_TOKEN']
-    PHONE_NUMBER="+13868537656"
+    PHONE_NUMBER= app.config['PHONE_NUMBER']
     client = Client(account_sid, auth_token)
     client.api.account.messages.create(to="+66"+numberphone,from_=PHONE_NUMBER,body="GV-OTP : "+str(otp))
     addNumberPhoneUser(numberphone,otp)
@@ -71,7 +68,7 @@ def LoginOTP() :
 
 
 #verify OTP 
-@app.route('/verifyOTP',methods=['POST'])
+@app.route('/api/verifyOTP',methods=['POST'])
 def VerifyOTP():
     numberphone=request.json["numberphone"]
     OTPconfirm=request.json["confirmOTP"]
@@ -84,7 +81,7 @@ def VerifyOTP():
 
 
 #add user or register  
-@app.route('/Adduser',methods=['POST'])
+@app.route('/api/Adduser',methods=['POST'])
 def Adduser():
     if request.method == 'POST':
         email=request.json["email"]
@@ -110,7 +107,7 @@ def Adduser():
 
 
 #login for users  get email or numberphone 
-@app.route('/Login',methods=['POST'])
+@app.route('/api/Login',methods=['POST'])
 def Login():
     username=request.json["email"]
     password=request.json["password"]
@@ -142,7 +139,7 @@ def Login():
               
 
 #get user one 
-@app.route('/getuser/<string:userid>',methods=['GET'])
+@app.route('/api/getuser/<string:userid>',methods=['GET'])
 def getuser(userid):
     result=db.Users.find_one({"_id":ObjectId(userid)})
     return  {   
@@ -154,7 +151,7 @@ def getuser(userid):
 
 
 #get products  from store  for mobileApp 
-@app.route('/GetProducts/<string:store_ID>',methods = ['GET'])
+@app.route('/api/GetProducts/<string:store_ID>',methods = ['GET'])
 def Getproduct(store_ID):   
     product=[]
     for x in db.product.find({'store_ID':store_ID}):
@@ -170,7 +167,7 @@ def Getproduct(store_ID):
 
 
 #add product from store
-@app.route('/addproduct',methods = ['GET','POST'])
+@app.route('/api/addproduct',methods = ['GET','POST'])
 def Addproduct():
     Price=request.form.get("price")
     quantity=request.form.get("stock_quantity")
@@ -231,7 +228,7 @@ def Addproduct():
 
 
 #get product from productID 
-@app.route('/getProduct/<string:_id>',methods=['GET'])
+@app.route('/api/getProduct/<string:_id>',methods=['GET'])
 def getProduct(_id):
     proname=''
     price=''
@@ -248,7 +245,7 @@ def getProduct(_id):
 
 
 #update data product from store 
-@app.route('/UpdateProduct/<string:proID>',methods=['PUT'])
+@app.route('/api/UpdateProduct/<string:proID>',methods=['PUT'])
 def Updateproduct(proID):
     proname=request.json["proname"]
     price=request.json["price"]
@@ -271,7 +268,7 @@ import fcmManager as fcm
 
 
 #post ordrs from user 
-@app.route('/post_order',methods=['POST'])
+@app.route('/api/post_order',methods=['POST'])
 def postOrder():
     Date=d1
     current_time = now.strftime("%H:%M:%S")
@@ -312,7 +309,7 @@ def getstoreData(storeid):
 
 
 #get orders for web from user 
-@app.route('/getorder/<string:userid>',methods=['GET'])
+@app.route('/api/getorder/<string:userid>',methods=['GET'])
 def getorder(userid):
     orders=[]
     result_orders=db.orders.find({"userid":userid,"status":"รอผู้ขายยืนยันคำสั่งซื้อ"})
@@ -332,7 +329,7 @@ def getorder(userid):
 
 
 #get ordersAction for web from user status operating  
-@app.route('/getorderAction/<string:userid>/<string:status>',methods=['GET'])
+@app.route('/api/getorderAction/<string:userid>/<string:status>',methods=['GET'])
 def getorderAction(userid,status):
     orders=[]
     result_orders=db.orders.find({"userid":userid,'status':status})
@@ -354,7 +351,7 @@ def getorderAction(userid,status):
 
 
 #getDetails for web 
-@app.route('/getorderDetail/<string:bill_id>',methods=['GET'])
+@app.route('/api/getorderDetail/<string:bill_id>',methods=['GET'])
 def getorderDetail(bill_id):
     orders=[]
     result_order=db.orders.find({'_id':ObjectId(bill_id)})
@@ -365,7 +362,7 @@ def getorderDetail(bill_id):
 
 
 #get order tracking for web status order success by user 
-@app.route('/getordertracking/<string:userid>',methods=['GET'])
+@app.route('/api/getordertracking/<string:userid>',methods=['GET'])
 def getorderTcaking(userid):
     ordersTrace=[]
     storeid=""
@@ -384,7 +381,7 @@ def getorderTcaking(userid):
 
 
 #post store  register for vendor 
-@app.route('/Createstore',methods=['POST'])
+@app.route('/api/Createstore',methods=['POST'])
 def postStore():
     storeID="GV"+genBill()
     storename=request.json["storename"]
@@ -410,7 +407,7 @@ def postStore():
 
 
 #get Mystore  for mobile Application  
-@app.route('/getstore/<string:userid>',methods=['GET'])
+@app.route('/api/getstore/<string:userid>',methods=['GET'])
 def getstore(userid):
     mystore={}
     status=''
@@ -429,7 +426,7 @@ def getstore(userid):
 
  
 #create_link_store for mobile Application 
-@app.route('/createlink',methods=['POST'])
+@app.route('/api/createlink',methods=['POST'])
 def createLink():  
     products=request.json["products"]
     store_ID=request.json["store_ID"]
@@ -452,7 +449,7 @@ def createLink():
 
 
 #getData LinkStores for MobileApp
-@app.route('/getDataLinkStores/<string:storeID>',methods=['GET'])
+@app.route('/api/getDataLinkStores/<string:storeID>',methods=['GET'])
 def getDataLinkStores(storeID):
     outputLinks=[]
     results=db.LinkStore.find({'store_ID':storeID})
@@ -469,7 +466,7 @@ def getDataLinkStores(storeID):
 
 
 #delete LinkStore 
-@app.route('/DeleteLink/<string:LinkID>',methods=['DELETE'])
+@app.route('/api/DeleteLink/<string:LinkID>',methods=['DELETE'])
 def DeleteLink(LinkID):
     result = db.LinkStore.delete_many({'_id':ObjectId(LinkID)})
     if result :
@@ -478,7 +475,7 @@ def DeleteLink(LinkID):
 
 
 #getproduct from link store sale for WebApp 
-@app.route('/GetProductShop/<string:linkStoreID>',methods=['GET'])
+@app.route('/api/GetProductShop/<string:linkStoreID>',methods=['GET'])
 def GetProductShop(linkStoreID):
     products=[]
     output=[]
@@ -501,7 +498,7 @@ def GetProductShop(linkStoreID):
 
 
 #update status order  for mobile application 
-@app.route('/updateStatusOrder/<string:bill_id>/<string:status>',methods=['PUT'])
+@app.route('/api/updateStatusOrder/<string:bill_id>/<string:status>',methods=['PUT'])
 def updateStatusOrder(bill_id,status):  
     current_time = now.strftime("%H:%M:%S")
     
@@ -535,7 +532,7 @@ def updateStatusOrder(bill_id,status):
 
 
 #post customer contract
-@app.route('/customerContract',methods=['POST'])
+@app.route('/api/customerContract',methods=['POST'])
 def postcustomerContact():
     userid=request.json["userid"]
     latitude=request.json["latitude"]
@@ -555,7 +552,7 @@ def postcustomerContact():
 
 
 #get customer  one contract 
-@app.route('/getcustomerContact/<string:userid>',methods=['GET'])
+@app.route('/api/getcustomerContact/<string:userid>',methods=['GET'])
 def getContactUser(userid):
     output=[]
     result=db.customer_contract.find({'userid':userid})
@@ -583,7 +580,7 @@ def getProductList(productList):
 
 
 #get order for mobileApplication by vender 
-@app.route('/GetorderStore/<string:store_ID>/<string:status>',methods=['GET'])
+@app.route('/api/GetorderStore/<string:store_ID>/<string:status>',methods=['GET'])
 def GetorderStore(store_ID,status):
     orderStore=[]
     results=db.orders.find({'store_ID':store_ID,'status':status})
@@ -608,7 +605,7 @@ def GetorderStore(store_ID,status):
     
 
 #getorder prepare and delivery
-@app.route('/GetorderDelivery/<string:store_ID>',methods=['GET'])
+@app.route('/api/GetorderDelivery/<string:store_ID>',methods=['GET'])
 def GetorderDelivery(store_ID):
 
     orderStore=[]
@@ -661,7 +658,7 @@ def GetorderDelivery(store_ID):
 
 
 #save review score 
-@app.route('/SaveReview',methods = ['GET','POST'])
+@app.route('/api/SaveReview',methods = ['GET','POST'])
 def SaveReview():
 
     order_id=request.form.get("orderID")
@@ -718,7 +715,7 @@ def SaveReview():
 
 
 #get review score 
-@app.route('/GetReview/<string:orderID>',methods=['GET'])
+@app.route('/api/GetReview/<string:orderID>',methods=['GET'])
 def GetReview(orderID):
     output={}
     result = db.Rateting.find({'orderID':orderID})
@@ -729,7 +726,7 @@ def GetReview(orderID):
 
 
 #update reviw score 
-@app.route('/updateReview',methods=['PUT'])
+@app.route('/api/updateReview',methods=['PUT'])
 def updateReview():
     orderID=request.json["bill_id"]
     rate_detail=request.json["rate_detail"]
@@ -747,7 +744,7 @@ def updateReview():
 
 
 
-@app.route('/upload', methods=['POST'])
+@app.route('/api/upload', methods=['POST'])
 def upload_image():
     title=request.form.get("title")
     print(title)
@@ -793,26 +790,26 @@ def upload_image():
         resp.status_code = 500
         return resp
 
-@app.route('/getimage/<string:filename>')
+@app.route('/api/getimage/<string:filename>')
 def getimg(filename):
     Files='uploads/products/'+filename
     return send_file(Files,mimetype="image/jpg")
 
 
-@app.route('/GetimageReview/<string:filename>')
+@app.route('/api/GetimageReview/<string:filename>')
 def Getimg(filename):
     Files='uploads/reviews/'+filename
     return send_file(Files,mimetype="image/jpg")
 
 
-@app.route('/sendEmail',methods=['POST'])
+@app.route('/api/sendEmail',methods=['POST'])
 def SendEmail():
     email=request.json['email']
     senEmail(email)
     return {"message":"เช็ครหัสยืนยันในอีเมลของคุณ"}
 
 
-@app.route('/gettokens/<string:storeID>',methods=['GET'])
+@app.route('/api/gettokens/<string:storeID>',methods=['GET'])
 def gettokens(storeID):
     result=db.store.find({'store_ID':storeID})
     Token=""
@@ -826,7 +823,7 @@ def gettokens(storeID):
 
 
 #update token for device Mobile App.
-@app.route('/updateTokens',methods=['PUT'])
+@app.route('/api/updateTokens',methods=['PUT'])
 def updateToken():
     storeID=request.json["store_ID"]
     token=request.json["token"]
@@ -841,7 +838,7 @@ def updateToken():
  
 
 #คำร้องขออนุมัติเปิดร้านค้าทั้งหมด 
-@app.route('/GetAllshops',methods=['GET'])
+@app.route('/api/GetAllshops',methods=['GET'])
 def GetAll():
     output=[]
     _id=""
@@ -871,7 +868,7 @@ def GetAll():
 
 
 #สถาน่ะอนุมัติแล้ว
-@app.route('/Getapproved',methods=['GET'])
+@app.route('/api/Getapproved',methods=['GET'])
 def Getapproved():
     output=[]
     _id=""
@@ -898,7 +895,7 @@ def Getapproved():
 
 
 #สถาน่ะยังไม่อนุมัติ 
-@app.route('/Getdisapproved',methods=['GET'])
+@app.route('/api/Getdisapproved',methods=['GET'])
 def Getdisapproved():
     output=[]
     _id=""
@@ -925,7 +922,7 @@ def Getdisapproved():
 
 
 #อัตเดตสถาน่ะ ร้านค้าเป็นอนุอัติ และส่งแจ้งเตือนไป App mobile 
-@app.route('/confirmStore/<string:storeID>',methods=['PUT'])
+@app.route('/api/confirmStore/<string:storeID>',methods=['PUT'])
 def confirmstore(storeID):
     query={'store_ID':storeID}
     value={
@@ -943,7 +940,7 @@ def confirmstore(storeID):
 
 
 #ดึงข้อมูลรายละเอียดร้านค้า 
-@app.route('/shopDetail/<string:storeID>',methods=['GET'])
+@app.route('/api/shopDetail/<string:storeID>',methods=['GET'])
 def getShop(storeID):
     output={}
     _id=""
