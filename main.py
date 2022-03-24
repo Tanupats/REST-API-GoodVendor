@@ -30,7 +30,7 @@ CORS(app)
 
 #set API send SMS to Device 
 app.config['ACCOUNT_SID']="AC972c43f1b33f1b1fdf504a65febf75a4"
-app.config['AUTH_TOKEN']="76d33a1c032729b5b1e62f593e36728f"
+app.config['AUTH_TOKEN']="b0dfc80f8ed10fc21b12dddb7577e7cd"
 app.config['PHONE_NUMBER']="+13868537656"
 
 #set phat for upload File 
@@ -218,6 +218,7 @@ def Addproduct():
                     }
         result =  db.product.insert_one(datapro)
         if result:
+            print(datapro)
             return resp
     else:
         resp = jsonify(errors) 
@@ -294,7 +295,8 @@ def postOrder():
     if result:
          title='แจ้งเตือนคำสั่งซื้อสินค้าใหม่ตอนนี้'
          body='สถาน่ะรอผู้ขายยืนยันคำสั่งซื้อ'
-         response=fcm.sendNotification(storeID,title,body)
+         data={"order":"ordernew"}
+         response=fcm.sendNotification(storeID,title,body,data)
          if(response==200):
             return {"message":"post order your success"}
 
@@ -323,9 +325,10 @@ def getorder(userid):
             'bill_id': str(x['_id']),
             'storename':storename,
             'store_img':storeimg,
-            'status_order':x['status']
+            'status_order':x['status'],
+            'total':x['total']
          })
-    return {"meesage":"getorder success","order":orders}
+    return {"message":"getorder success","order":orders}
 
 
 #get ordersAction for web from user status operating  
@@ -343,7 +346,8 @@ def getorderAction(userid,status):
             'bill_id': str(x['_id']),
             'storename':storename,
             'store_img':storeimg,
-            'status_order':x['status']
+            'status_order':x['status'],
+            'total':x['total']
          })
     return {"meesage":"getorderAction","order":orders}
 
@@ -932,8 +936,9 @@ def confirmstore(storeID):
     update=db.store.update_one(query,value)
     if(update):
          title='แจ้งเตือนผลการลงทะเบียนร้านค้ากับ GoodVendor'
-         body='ได้รับการอนุมติเปิดร้านเรียบร้อยแล้ว'
-         response=fcm.sendNotification(storeID,title,body)
+         body='ร้านของคุณได้รับการอนุมติเรียบร้อยแล้ว'
+         data={"status_approve":"approve"}
+         response=fcm.sendNotification(storeID,title,body,data)
          if(response==200):  
             return {"message":"updated statusconfirm success","status":True}
 

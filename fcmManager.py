@@ -2,7 +2,7 @@ import requests
 import json
 from config.db import db
 
-def sendNotification(storeID,title,body):
+def sendNotification(storeID,title,body,data):
 
     deviceToken=""
     result=db.store.find({'store_ID':storeID}) 
@@ -11,7 +11,6 @@ def sendNotification(storeID,title,body):
     
     serverToken='AAAAyUVAl84:APA91bESa6gqr04uti79giLDhHOietQrqmMu0PjE_wlQ2qAJu9MQzzT8a1aBUcaQzF_ZijfJmZTwnIpMShxLZotXpkIlH3h06GibuBji-Y62ZBsETs7jmuopSHq2e2iVwCADExt4Rvh1'
    
-    
     headers={
         'Content-Type': 'application/json',
         'Authorization': 'key=' + serverToken,
@@ -22,7 +21,7 @@ def sendNotification(storeID,title,body):
           'notification': { 'title': title,
                             'body': body
                           },
-          "data": {"click_action":"FLUTTER_NOTIFICATION_CLICK"},
+          "data": data,
           'to':deviceToken,
           'priority': 'high',
           
