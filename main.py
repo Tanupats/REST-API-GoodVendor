@@ -268,7 +268,7 @@ def Updateproduct(proID):
 import fcmManager as fcm
 
 
-#post ordrs from user 
+#post ordrs from user to mobileApp 
 @app.route('/api/post_order',methods=['POST'])
 def postOrder():
     Date=d1
@@ -295,9 +295,10 @@ def postOrder():
     if result:
          title='แจ้งเตือนคำสั่งซื้อสินค้าใหม่ตอนนี้'
          body='สถาน่ะรอผู้ขายยืนยันคำสั่งซื้อ'
-         data={"order":"ordernew"}
+         data={'click_action':'FLUTTER_NOTIFICATION_CLICK','neworder':'1234'}
          response=fcm.sendNotification(storeID,title,body,data)
          if(response==200):
+            print(response)
             return {"message":"post order your success"}
 
 
@@ -822,7 +823,7 @@ def gettokens(storeID):
     if Token=="":
         return {"message":"token is Empty","status":False}
     else:
-        return {"message":"gettoken ok","status":True}
+        return {"message":"gettoken ok","token":Token}
 
 
 
