@@ -289,7 +289,8 @@ def postOrder():
     "orderTime": current_time,
     "Pickup_time":request.json["Pickup_time"],
     "note":request.json["note"],
-    "total":total
+    "total":total,
+    "order_date":request.json["order_date"]
     }
     result=db.orders.insert_one(orderlist)
     if result:
