@@ -557,6 +557,17 @@ def postcustomerContact():
 
 
 
+#update contract  
+@app.route('/api/updateContract/<string:userid>',methods=['PUT'])
+def updatecontract(userid):
+    query={"userid":userid}
+    data=request.json
+    newvalue = {"$set":data}
+    print(data)
+    if db.customer_contract.update_one(query,newvalue):
+        return {"message":"update contract user id is"+userid}
+
+
 #get customer  one contract 
 @app.route('/api/getcustomerContact/<string:userid>',methods=['GET'])
 def getContactUser(userid):
