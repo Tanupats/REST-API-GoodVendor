@@ -939,7 +939,7 @@ def confirmstore(storeID):
     if(update):
          title='แจ้งเตือนผลการลงทะเบียนร้านค้ากับ GoodVendor'
          body='ร้านของคุณได้รับการอนุมติเรียบร้อยแล้ว'
-         data={"status_approve":"approve"}
+         data={'click_action':'FLUTTER_NOTIFICATION_CLICK','confirmStore':'confirm'}
          response=fcm.sendNotification(storeID,title,body,data)
          if(response==200):  
             return {"message":"updated statusconfirm success","status":True}
