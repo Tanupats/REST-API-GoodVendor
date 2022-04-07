@@ -1,17 +1,9 @@
 
-
-
-from inspect import stack
-from math import fabs
 from bson import ObjectId
 from flask.helpers import send_file
-import pymongo,json
 from flask import Flask,request,jsonify
-from pymongo import results
-from pymongo import response
 from twilio.rest import Client
 from flask_cors import CORS
-from bson.timestamp import Timestamp
 from models.login import genotp,addNumberPhoneUser,genBill
 from models.user import GetuserData
 from models.sendEmail import senEmail
@@ -19,11 +11,9 @@ from config.db import db
 import uuid
 import os
 from werkzeug.utils import secure_filename
-import urllib.request
 from datetime import date
 from datetime import datetime
 
-import os, time
 app = Flask(__name__)
 CORS(app) 
 
@@ -32,6 +22,7 @@ CORS(app)
 app.config['ACCOUNT_SID']="AC972c43f1b33f1b1fdf504a65febf75a4"
 app.config['AUTH_TOKEN']="b0dfc80f8ed10fc21b12dddb7577e7cd"
 app.config['PHONE_NUMBER']="+13868537656"
+
 
 #set phat for upload File 
 UPLOAD_FOLDER = 'uploads/reviews'
