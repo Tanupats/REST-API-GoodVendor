@@ -477,11 +477,15 @@ def GetProductShop(linkStoreID):
     products=[]
     output=[]
     storeID=""
+    date=""
+    Delivery_time=""
     result = db.LinkStore.find({'Url_path':linkStoreID})
     if result:
         for x in result:
             products=x['products']
             storeID=x['store_ID']
+            date=x['Date']
+            Delivery_time=x['Delivery_time']
         for product in products:
             output.append({ 
                             "product_id":product["product_id"],
@@ -490,7 +494,8 @@ def GetProductShop(linkStoreID):
                             "product_img":product["product_img"],
                             "number":0})                          
         storeData=getstoreData(storeID)['name']
-        return {"products":output,"storeID":storeID,"storename":storeData}
+        
+        return {"products":output,"storeID":storeID,"storename":storeData,"date":date,"Delivery_time":Delivery_time}
 
 
 
