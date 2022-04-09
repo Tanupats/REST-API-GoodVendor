@@ -11,7 +11,6 @@ from config.db import db
 import uuid
 import os
 from werkzeug.utils import secure_filename
-from datetime import date
 from datetime import datetime
 
 app = Flask(__name__)
@@ -38,11 +37,12 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-today = date.today()
-d1 = today.strftime("%d/%m/%Y")
-now = datetime.now()
+today = datetime.today()
+day = today.strftime("%d/%m/%Y")
+time = today.strftime("%H:%M:%S")
 
-
+print("date",day)
+print("time",time)
 
 #Login OTP for users 
 @app.route('/api/LoginOTP',methods=['POST'])
@@ -262,14 +262,12 @@ import fcmManager as fcm
 #post ordrs from user to mobileApp 
 @app.route('/api/post_order',methods=['POST'])
 def postOrder():
-    Date=d1
-    current_time = now.strftime("%H:%M:%S")
     storeID=request.json["store_ID"]
     total=request.json["total"]
     orderlist={
     "userid":request.json["userid"],
     "store_ID":storeID,
-    "date":Date,
+    "date":day,
     "status_order":[
         {"time":"00:00","status":"จัดส่งสำเร็จ","check":False},
         {"time":"00:00","status":"สินค้ากำลังจัดส่ง","check":False},
@@ -277,7 +275,7 @@ def postOrder():
         {"time":"00:00","status":"ยืนยันคำสั่งซื้อ","check":False}],
     "status":"รอผู้ขายยืนยันคำสั่งซื้อ",
     "order_products":request.json["order_products"],
-    "orderTime": current_time,
+    "orderTime": time,
     "Pickup_time":request.json["Pickup_time"],
     "note":request.json["note"],
     "total":total,
@@ -396,7 +394,7 @@ def postStore():
          "long":longs,
          "store_img":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFylME2j0-3Lllfe1N6nGX5qjgYBHHXTbojA&usqp=CAU",
          "token":token,
-         "registration_date":d1,
+         "registration_date":day,
          "status_confirm":"ยื่นคำร้อง"
          })
     if(result):
@@ -502,31 +500,31 @@ def GetProductShop(linkStoreID):
 #update status order  for mobile application 
 @app.route('/api/updateStatusOrder/<string:bill_id>/<string:status>',methods=['PUT'])
 def updateStatusOrder(bill_id,status):  
-    current_time = now.strftime("%H:%M:%S")
+  
     
     if status == 'order_confirmation':
         db.orders.update_one(
                 {
                 "_id":ObjectId(bill_id),"status_order.status":"ยืนยันคำสั่งซื้อ"},
-                {"$set":{"status":"ยืนยันคำสั่งซื้อ","status_order.$.check":True,"status_order.$.time":current_time} }
+                {"$set":{"status":"ยืนยันคำสั่งซื้อ","status_order.$.check":True,"status_order.$.time":time} }
                 )
     elif status =='Preparing':
          db.orders.update_one(
                 {
                 "_id":ObjectId(bill_id),"status_order.status":"ผู้ขายกำลังเตรียมสินค้า"},
-                {"$set":{"status":"ผู้ขายกำลังเตรียมสินค้า","status_order.$.check":True,"status_order.$.time":current_time} }
+                {"$set":{"status":"ผู้ขายกำลังเตรียมสินค้า","status_order.$.check":True,"status_order.$.time":time} }
                 )
     elif status =='shipping':
          db.orders.update_one(
                 {
                 "_id":ObjectId(bill_id),"status_order.status":"สินค้ากำลังจัดส่ง"},
-                {"$set":{"status":"สินค้ากำลังจัดส่ง","status_order.$.check":True,"status_order.$.time":current_time} }
+                {"$set":{"status":"สินค้ากำลังจัดส่ง","status_order.$.check":True,"status_order.$.time":time} }
                 )
     elif status =='Successful_delivery':
          db.orders.update_one(
                 {
                 "_id":ObjectId(bill_id),"status_order.status":"จัดส่งสำเร็จ"},
-                {"$set":{"status":"จัดส่งสำเร็จ","status_order.$.check":True,"status_order.$.time":current_time} }
+                {"$set":{"status":"จัดส่งสำเร็จ","status_order.$.check":True,"status_order.$.time":time} }
                 )
 
     return {"message":"update status success"}
