@@ -36,13 +36,10 @@ ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-
+#get dateTime 
 today = datetime.today()
 day = today.strftime("%d/%m/%Y")
-time = today.strftime("%H:%M:%S")
 
-print("date",day)
-print("time",time)
 
 #Login OTP for users 
 @app.route('/api/LoginOTP',methods=['POST'])
@@ -262,6 +259,7 @@ import fcmManager as fcm
 #post ordrs from user to mobileApp 
 @app.route('/api/post_order',methods=['POST'])
 def postOrder():
+    time = request.json["ordertime"]
     storeID=request.json["store_ID"]
     total=request.json["total"]
     orderlist={
@@ -279,7 +277,6 @@ def postOrder():
     "Pickup_time":request.json["Pickup_time"],
     "note":request.json["note"],
     "total":total,
-    "order_date":request.json["order_date"]
     }
     result=db.orders.insert_one(orderlist)
     if result:
@@ -329,7 +326,7 @@ def getorderAction(userid,status):
     result_orders=db.orders.find({"userid":userid,'status':status})
     storeid=""
     for x in result_orders:
-        storeid=x['store_ID']
+        storeid=x['store_ID'] 
         storename=getstoreData(storeid)['name']
         storeimg=getstoreData(storeid)['store_img']
         orders.append(
@@ -499,32 +496,31 @@ def GetProductShop(linkStoreID):
 
 #update status order  for mobile application 
 @app.route('/api/updateStatusOrder/<string:bill_id>/<string:status>',methods=['PUT'])
-def updateStatusOrder(bill_id,status):  
-  
-    
+def updateStatusOrder(bill_id,status): 
+    datecurrent=request.json["time"]
     if status == 'order_confirmation':
         db.orders.update_one(
                 {
                 "_id":ObjectId(bill_id),"status_order.status":"ยืนยันคำสั่งซื้อ"},
-                {"$set":{"status":"ยืนยันคำสั่งซื้อ","status_order.$.check":True,"status_order.$.time":time} }
+                {"$set":{"status":"ยืนยันคำสั่งซื้อ","status_order.$.check":True,"status_order.$.time":datecurrent} }
                 )
     elif status =='Preparing':
          db.orders.update_one(
                 {
                 "_id":ObjectId(bill_id),"status_order.status":"ผู้ขายกำลังเตรียมสินค้า"},
-                {"$set":{"status":"ผู้ขายกำลังเตรียมสินค้า","status_order.$.check":True,"status_order.$.time":time} }
+                {"$set":{"status":"ผู้ขายกำลังเตรียมสินค้า","status_order.$.check":True,"status_order.$.time":datecurrent} }
                 )
     elif status =='shipping':
          db.orders.update_one(
                 {
                 "_id":ObjectId(bill_id),"status_order.status":"สินค้ากำลังจัดส่ง"},
-                {"$set":{"status":"สินค้ากำลังจัดส่ง","status_order.$.check":True,"status_order.$.time":time} }
+                {"$set":{"status":"สินค้ากำลังจัดส่ง","status_order.$.check":True,"status_order.$.time":datecurrent} }
                 )
     elif status =='Successful_delivery':
          db.orders.update_one(
                 {
                 "_id":ObjectId(bill_id),"status_order.status":"จัดส่งสำเร็จ"},
-                {"$set":{"status":"จัดส่งสำเร็จ","status_order.$.check":True,"status_order.$.time":time} }
+                {"$set":{"status":"จัดส่งสำเร็จ","status_order.$.check":True,"status_order.$.time":datecurrent} }
                 )
 
     return {"message":"update status success"}
