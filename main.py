@@ -302,7 +302,7 @@ def getstoreData(storeid):
 @app.route('/api/getorder/<string:userid>',methods=['GET'])
 def getorder(userid):
     orders=[]
-    result_orders=db.orders.find({"userid":userid,"status":"รอผู้ขายยืนยันคำสั่งซื้อ"})
+    result_orders=db.orders.find({"userid":userid,"status":"รอผู้ขายยืนยันคำสั่งซื้อ"}).sort('orderTime',-1)
     storeid=""
     for x in result_orders:
         storeid=x['store_ID']
@@ -314,7 +314,8 @@ def getorder(userid):
             'storename':storename,
             'store_img':storeimg,
             'status_order':x['status'],
-            'total':x['total']
+            'total':x['total'],
+            'order_time':x['orderTime']
          })
     return {"message":"getorder success","order":orders}
 
@@ -438,13 +439,13 @@ def createLink():
     if(result):
         return {"message":"create_link_store success","status":True,"link_store":Url_path}
 
-
+ 
 
 #getData LinkStores for MobileApp
 @app.route('/api/getDataLinkStores/<string:storeID>',methods=['GET'])
 def getDataLinkStores(storeID):
     outputLinks=[]
-    results=db.LinkStore.find({'store_ID':storeID})
+    results=db.LinkStore.find({"store_ID":storeID}).sort("Date",1)
     for x in results:
         outputLinks.append({
                             'id':str(x['_id']),                          
