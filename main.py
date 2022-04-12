@@ -324,7 +324,7 @@ def getorder(userid):
 @app.route('/api/getorderAction/<string:userid>/<string:status>',methods=['GET'])
 def getorderAction(userid,status):
     orders=[]
-    result_orders=db.orders.find({"userid":userid,'status':status})
+    result_orders=db.orders.find({"userid":userid,'status':status}).sort('orderTime',-1)
     storeid=""
     for x in result_orders:
         storeid=x['store_ID'] 
@@ -336,7 +336,8 @@ def getorderAction(userid,status):
             'storename':storename,
             'store_img':storeimg,
             'status_order':x['status'],
-            'total':x['total']
+            'total':x['total'],
+            'order_time':x['orderTime']
          })
     return {"meesage":"getorderAction","order":orders}
 
@@ -352,25 +353,6 @@ def getorderDetail(bill_id):
         orders.append({'orderList':x['order_products'],"status_order":x['status_order']})
     return {"meesage":"getorder detail success","orders":orders,'bill_id':bill_id}
 
-
-
-#get order tracking for web status order success by user 
-@app.route('/api/getordertracking/<string:userid>',methods=['GET'])
-def getorderTcaking(userid):
-    ordersTrace=[]
-    storeid=""
-    storeData=''   
-    result=db.orders.find({"userid":userid,"status":"จัดส่งสำเร็จ"})
-    for x in result:
-        storeid=x['store_ID']
-        storeData=getstoreData(storeid)
-        ordersTrace.append({
-            'bill_id': str(x['_id']),
-            'storename': str(storeData['name']),
-            'store_img':storeData['store_img'],
-            'status_order':x['status']
-        })     
-    return {"meesage":"getorder tracking success","orders":ordersTrace}
 
 
 #post store  register for vendor 
