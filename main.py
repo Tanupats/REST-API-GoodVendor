@@ -12,7 +12,7 @@ import uuid
 import os
 from werkzeug.utils import secure_filename
 from datetime import datetime
-
+import time
 app = Flask(__name__)
 CORS(app) 
 
@@ -292,10 +292,12 @@ def postOrder():
 
 def getstoreData(storeid):
     output={}
-    result=db.store.find({'store_ID':storeid})
-    for x in result:
-        output={'name':x['storename'],'store_img':x['store_img']}
-    return output
+    if storeid:
+        result=db.store.find({'store_ID':storeid})
+        for x in result:
+            output={'name':x['storename'],'store_img':x['store_img']}
+        return output
+    else :return {'name':''} 
 
 
 #get orders for web from user 
@@ -318,6 +320,7 @@ def getorder(userid):
             'order_time':x['orderTime']
          })
     return {"message":"getorder success","order":orders}
+
 
 
 #get ordersAction for web from user status operating  
@@ -399,6 +402,7 @@ def getstore(userid):
                         }
     return jsonify(mystore)
 
+
  
 #create_link_store for mobile Application 
 @app.route('/api/createlink',methods=['POST'])
@@ -406,6 +410,7 @@ def createLink():
     products=request.json["products"]
     store_ID=request.json["store_ID"]
     Dates=request.json["Date"]
+    dateTimest=time.mktime(datetime.strptime(Dates,"%d/%m/%Y").timetuple())
     Delivery_time=request.json["Delivery_time"]
     Url_path=store_ID+str(uuid.uuid4()) 
     link_expired=request.json["link_expired"]
@@ -413,7 +418,7 @@ def createLink():
     {   
         "products":products,
         "store_ID":store_ID,
-        "Date":Dates,
+        "Date":dateTimest,
         "Delivery_time":Delivery_time,
         "Url_path":Url_path,
         "link_expired":link_expired
@@ -429,15 +434,16 @@ def getDataLinkStores(storeID):
     outputLinks=[]
     results=db.LinkStore.find({"store_ID":storeID}).sort("Date",1)
     for x in results:
+        date_cre=datetime.fromtimestamp(x['Date'])
         outputLinks.append({
                             'id':str(x['_id']),                          
-                            'Date':x['Date'],
+                            'Date': date_cre,
                             'Delivery_time':x['Delivery_time'],
                             'Url_path':x['Url_path'],
                             'link_expired':x['link_expired']
                             })
 
-    return jsonify({"message":"GetDataLinkStore success","Links":outputLinks})  
+    return jsonify(outputLinks)  
 
 
 #delete LinkStore 
@@ -462,7 +468,7 @@ def GetProductShop(linkStoreID):
         for x in result:
             products=x['products']
             storeID=x['store_ID']
-            date=x['Date']
+            date=datetime.fromtimestamp(x['Date'])
             Delivery_time=x['Delivery_time']
         for product in products:
             output.append({ 
@@ -471,8 +477,7 @@ def GetProductShop(linkStoreID):
                             "product_price":int(product["product_price"]) ,
                             "product_img":product["product_img"],
                             "number":0})                          
-        storeData=getstoreData(storeID)['name']
-        
+        storeData=getstoreData(storeID)['name']    
         return {"products":output,"storeID":storeID,"storename":storeData,"date":date,"Delivery_time":Delivery_time}
 
 
@@ -509,24 +514,13 @@ def updateStatusOrder(bill_id,status):
     return {"message":"update status success"}
 
 
-
 #post customer contract
-@app.route('/api/customerContract',methods=['POST'])
+@app.route('/api/PostContract',methods=['POST'])
 def postcustomerContact():
-    userid=request.json["userid"]
-    latitude=request.json["latitude"]
-    longitude=request.json["longitude"]
-    adress=request.json["adress"] 
-    if db.customer_contract.find_one({'userid':userid}):
-        return  {"status":False,"message":"Contact information has been added."}
-    else:
-        result=db.customer_contract.insert_one(
-        {'userid':userid,
-        'latitude':latitude,
-        'longitude':longitude,
-        'adress':adress})
-        if(result):
-            return  {"status":True,"message":"postCustomerContract Success."}
+    data=request.json
+    result=db.customer_contract.insert_one(data)
+    if(result):
+        return  {"status":True,"message":"postCustomerContract Success."}
 
 
 
@@ -536,7 +530,6 @@ def updatecontract(userid):
     query={"userid":userid}
     data=request.json
     newvalue = {"$set":data}
-    print(data)
     if db.customer_contract.update_one(query,newvalue):
         return {"message":"update contract user id is"+userid}
 
