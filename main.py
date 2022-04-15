@@ -544,10 +544,11 @@ def getContactUser(userid):
         for x in result:
             output.append({
                         'adress':x['adress'],
+                        'details':x['details'],
                         'latitude':x['latitude'],
                         'longitude':x['longitude'],
                         'numberphone':users['numberphone'],
-                        'name':users['name']
+                        'name':users['name']+"  "+users['lastname']
                         })
         return {"status":True,"message":"getContactUser Success","usercontact": output }
 
@@ -694,7 +695,7 @@ def SaveReview():
         resp = jsonify(errors)
         resp.status_code = 500
         return resp  
-     
+
 
 
 #get review score 
@@ -704,7 +705,9 @@ def GetReview(orderID):
     result = db.Rateting.find({'orderID':orderID})
     for x in result:
         output={'orderID':x['orderID'] ,'img_upload':x['img_upload'], 'rate_detail':x['rate_detail'] ,'value':x['value']}
-    return output
+    if output :
+        return output
+    else :return {'status':False}
 
 
 
