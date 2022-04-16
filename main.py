@@ -526,12 +526,16 @@ def postcustomerContact():
 
 #update contract  
 @app.route('/api/updateContract/<string:userid>',methods=['PUT'])
-def updatecontract(userid):
-    query={"userid":userid}
-    data=request.json
-    newvalue = {"$set":data}
+def updatecontract(userid): 
+    lat=request.json["latitude"]
+    long=request.json["longitude"]
+    adress=request.json["adress"]
+    details=request.json["details"]
+    query={'userid':userid}
+    newvalue = {"$set":{"latitude":lat,"longitude":long,"adress":adress,"details":details }}
     if db.customer_contract.update_one(query,newvalue):
         return {"message":"update contract user id is"+userid}
+
 
 
 #get customer  one contract 
@@ -540,7 +544,7 @@ def getContactUser(userid):
     output=[]
     result=db.customer_contract.find({'userid':userid})
     users=db.Users.find_one({'_id':ObjectId(userid)})
-    if result :
+    if result:
         for x in result:
             output.append({
                         'adress':x['adress'],
@@ -550,7 +554,11 @@ def getContactUser(userid):
                         'numberphone':users['numberphone'],
                         'name':users['name']+"  "+users['lastname']
                         })
-        return {"status":True,"message":"getContactUser Success","usercontact": output }
+    if output:
+        return {"status":True,"message":"getContactUser Success","usercontact": output }       
+    else:   
+        return{"status":False,"message":"No ContactUser",}                 
+            
 
      
 
