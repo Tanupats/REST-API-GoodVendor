@@ -1,4 +1,5 @@
 
+from cmath import asin, cos, sqrt
 from bson import ObjectId
 from flask.helpers import send_file
 from flask import Flask,request,jsonify
@@ -933,6 +934,20 @@ def confirmstore(storeID):
             return {"message":"updated statusconfirm success","status":True}
 
 
+@app.route('/api/getcordinate',methods=['GET'])
+def getcoordinate():
+    lat1=request.json["lat1"]
+    lon1=request.json["lon1"]
+    lat2=request.json["lat2"]
+    lon2=request.json["lon2"]
+    p = 0.017453292519943295
+    c = cos
+    a = 0.5 -c((lat2 - lat1) * p) / 2 +c(lat1 * p) * c(lat2 * p) * (1 - c((lon2 - lon1) * p)) / 2
+    answer=12742 * asin(sqrt(a))
+    return {"duration":answer}
+   
+
+
 
 #ดึงข้อมูลรายละเอียดร้านค้า 
 @app.route('/api/shopDetail/<string:storeID>',methods=['GET'])
@@ -956,6 +971,7 @@ def getShop(storeID):
             'registration_date':storedata['registration_date']
             }                      
     return {"message":"get data shop","storeData":output}
+
 
 
 if __name__ == '__main__':
