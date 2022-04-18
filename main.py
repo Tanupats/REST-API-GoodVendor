@@ -415,25 +415,29 @@ def createLink():
     Delivery_time=request.json["Delivery_time"]
     Url_path=store_ID+str(uuid.uuid4()) 
     link_expired=request.json["link_expired"]
-    result=db.LinkStore.insert_one(
-    {   
-        "products":products,
-        "store_ID":store_ID,
-        "Date":dateTimest,
-        "Delivery_time":Delivery_time,
-        "Url_path":Url_path,
-        "link_expired":link_expired
-    })
-    if(result):
-        return {"message":"create_link_store success","status":True,"link_store":Url_path}
+    todayTime=today.timestamp()
+    if dateTimest >= todayTime:
 
+        result=db.LinkStore.insert_one(
+        {   
+            "products":products,
+            "store_ID":store_ID,
+            "Date":dateTimest,
+            "Delivery_time":Delivery_time,
+            "Url_path":Url_path,
+            "link_expired":link_expired
+        })
+        if(result):
+            return {"message":"create_link_store success","status":True,"link_store":Url_path}
+    else:
+        return {"message":"ข้อมูลวันที่ไม่ถูกต้อง","status":False}
  
 
 #getData LinkStores for MobileApp
 @app.route('/api/getDataLinkStores/<string:storeID>',methods=['GET'])
 def getDataLinkStores(storeID):
     outputLinks=[]
-    results=db.LinkStore.find({"store_ID":storeID}).sort("Date",1)
+    results=db.LinkStore.find({"store_ID":storeID}).sort("Date",-1)
     for x in results:
         date_cre=datetime.fromtimestamp(x['Date'])
         outputLinks.append({
@@ -836,25 +840,22 @@ def updateToken():
 @app.route('/api/GetAllshops',methods=['GET'])
 def GetAll():
     output=[]
-    _id=""
     result = db.store.find({'status_confirm':'ยื่นคำร้อง'})
-    for st in result:
-        _id=st['userid']
-        userdata=GetuserData(_id)       
+    for store in result: 
         output.append({
             'author':
                 {
                     'avatar':'',
-                    'name':userdata['name'],
-                    'email':userdata['email']
+                    'name':'',
+                    'email':''
                 },
                 'func':
                      {
-                    'job': st['storename'],
-                    'department': st['store_ID'],
-			            },
-                        'status_confirm': st['status_confirm'],
-                        'employed':st['registration_date']
+                    'job': store['storename'],
+                    'department': store['store_ID'],
+			        },
+                        'status_confirm': store['status_confirm'],
+                        'employed':store['registration_date']
 
         })
 
@@ -934,6 +935,7 @@ def confirmstore(storeID):
             return {"message":"updated statusconfirm success","status":True}
 
 
+
 @app.route('/api/getcordinate',methods=['GET'])
 def getcoordinate():
     lat1=request.json["lat1"]
@@ -945,7 +947,7 @@ def getcoordinate():
     a = 0.5 -c((lat2 - lat1) * p) / 2 +c(lat1 * p) * c(lat2 * p) * (1 - c((lon2 - lon1) * p)) / 2
     answer=12742 * asin(sqrt(a))
 
-    return jsonify({"duration":answer} ) 
+    return   {"duration":answer}
    
 
 
@@ -954,15 +956,9 @@ def getcoordinate():
 @app.route('/api/shopDetail/<string:storeID>',methods=['GET'])
 def getShop(storeID):
     output={}
-    _id=""
     result = db.store.find({'store_ID':storeID})   
-    for storedata in result:
-        _id=storedata['userid']
-        userdetail= GetuserData(_id)
-        output={
-            'name':userdetail['name'],
-            'email':userdetail['email'],
-            'numberphone':userdetail['numberphone'],
+    for storedata in result:    
+        output={     
             'storename':storedata['storename'], 
             'store_ID':storedata['store_ID'],
             'coordinates':storedata['coordinates'],
