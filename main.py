@@ -1,5 +1,6 @@
 
 from cmath import asin, cos, sqrt
+from unittest import result
 from bson import ObjectId
 from flask.helpers import send_file
 from flask import Flask,request,jsonify
@@ -95,7 +96,7 @@ def Adduser():
 
 
 
-#login for users  get email or numberphone 
+#login for users  
 @app.route('/api/Login',methods=['POST'])
 def Login():
     username=request.json["email"]
@@ -116,11 +117,11 @@ def Login():
 
     if results:
         return {"message":"Login succes","status":True,
-            "userinfo":[
+            "userinfo":
             {
                 "userid": str(results['_id']),
                 "name":results['name'],
-                "lastname":results['lastname']}]         
+                "lastname":results['lastname']}      
             } 
     else:
         return { "message":"เข้าสู่ระบบไม่สำเร็จ","status":False }
@@ -130,13 +131,13 @@ def Login():
 #get user one 
 @app.route('/api/getuser/<string:userid>',methods=['GET'])
 def getuser(userid):
-    result=db.Users.find_one({"_id":ObjectId(userid)})
+    result=db.Users.find({'_id':ObjectId(userid)})
+    print(list(result))
     return  {   
-                "status":True,
-                "userinfo":[{
-                "userid": str(result['_id']),
-                "name":result['name'],"lastname":result['lastname']}]              
+               "message":"ok"            
             }
+
+
 
 
 #get products  from store  for mobileApp 
@@ -959,6 +960,7 @@ def getShop(storeID):
     result = db.store.find({'store_ID':storeID})   
     for storedata in result:    
         output={     
+            'userid':storedata['userid'],
             'storename':storedata['storename'], 
             'store_ID':storedata['store_ID'],
             'coordinates':storedata['coordinates'],
@@ -967,7 +969,16 @@ def getShop(storeID):
             'store_img':storedata['store_img'],
             'registration_date':storedata['registration_date']
             }                      
-    return {"message":"get data shop","storeData":output}
+    return {"storeData":output}
+
+
+@app.route('/api/Getorderlist/<string:orderID>',methods=['GET'])
+def GetrateTing(orderID):
+    output=[]
+    result = db.orders.find({'_id':ObjectId(orderID)})
+    for pro in result:
+        output.append({"orderList": pro['order_products'],"total":pro['total']})
+    return jsonify(output)
 
 
 
