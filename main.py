@@ -128,14 +128,16 @@ def Login():
 
               
 
-#get user one 
+#getdata user 
 @app.route('/api/getuser/<string:userid>',methods=['GET'])
 def getuser(userid):
-    result=db.Users.find({'_id':ObjectId(userid)})
+    output={}
+    _id=ObjectId(userid)
+    result=db.Users.find({'_id':_id})
+    for user in result:
+        output={"name":user['name'] +" "+ user['lastname'],"numberphone":user['numberphone']}
     print(list(result))
-    return  {   
-               "message":"ok"            
-            }
+    return  jsonify(output)
 
 
 
@@ -195,20 +197,21 @@ def Addproduct():
         return resp
 
     if success:
+        result =  db.product.insert_one({ 
+                                   'proname':proname,
+                                   'price':Price,
+                                   'pro_img':photo.filename,
+                                   'stock_quantity':quantity,
+                                   'store_ID':storeId
+                    })
         resp = jsonify({
             'pro_img' : photo.filename,
             'status' : True,
             'message' : 'Images successfully uploaded and save dataProduct'})
         resp.status_code = 200
-        datapro = {    'proname':proname,
-                                   'price':Price,
-                                   'pro_img':photo.filename,
-                                   'stock_quantity':quantity,
-                                   'store_ID':storeId
-                    }
-        result =  db.product.insert_one(datapro)
+       
         if result:
-            print(datapro)
+            
             return resp
     else:
         resp = jsonify(errors) 
@@ -417,8 +420,9 @@ def createLink():
     Url_path=store_ID+str(uuid.uuid4()) 
     link_expired=request.json["link_expired"]
     todayTime=today.timestamp()
-    if dateTimest >= todayTime:
 
+    if dateTimest >= todayTime:
+        
         result=db.LinkStore.insert_one(
         {   
             "products":products,
@@ -430,6 +434,7 @@ def createLink():
         })
         if(result):
             return {"message":"create_link_store success","status":True,"link_store":Url_path}
+    
     else:
         return {"message":"ข้อมูลวันที่ไม่ถูกต้อง","status":False}
  
@@ -581,7 +586,7 @@ def getProductList(productList):
 @app.route('/api/GetorderStore/<string:store_ID>/<string:status>',methods=['GET'])
 def GetorderStore(store_ID,status):
     orderStore=[]
-    results=db.orders.find({'store_ID':store_ID,'status':status})
+    results=db.orders.find({'store_ID':store_ID,'status':status}).sort('orderTime',-1)
     productList=''
     if(results):
         for x in results:      
@@ -597,23 +602,21 @@ def GetorderStore(store_ID,status):
                 'lat':usersdata['lat'],
                 'lang':usersdata['lang'],
                 'products':getProductList(productList),
-                'ordertime':x['orderTime']       
+                'ordertime':x['orderTime'],    
+                'total':x['total']      
                 })         
         return jsonify(orderStore) 
-    
 
-#getorder prepare and delivery
+
+
+#getorder  delivery
 @app.route('/api/GetorderDelivery/<string:store_ID>',methods=['GET'])
 def GetorderDelivery(store_ID):
-
     orderStore=[]
-    results=db.orders.find({'store_ID':store_ID,'status':'ผู้ขายกำลังเตรียมสินค้า'})
     resultspre=db.orders.find({'store_ID':store_ID,'status':'สินค้ากำลังจัดส่ง'})
-    
-    productListpre=''
-    if(resultspre):
-        for x in resultspre:      
-            productListpre=x['order_products']
+
+    if(resultspre):  
+        for x in resultspre:           
             usersdata=GetuserData(x['userid'])
             orderStore.append({
                 'bill_id': str(x['_id']) , 
@@ -624,33 +627,11 @@ def GetorderDelivery(store_ID):
                 'adress':usersdata['adress'],
                 'lat':usersdata['lat'],
                 'lang':usersdata['lang'],
-                'products':getProductList(productListpre),
                 'ordertime':x['orderTime'],
-                'status':x['status']       
+                'status':x['status'],
+                'total':x['total']     
                 })  
 
-
-    productList=''
-    if(results):
-        for x in results:      
-            productList=x['order_products']
-            usersdata=GetuserData(x['userid'])
-            orderStore.append({
-                'bill_id': str(x['_id']) , 
-                'Pickup_time':x['Pickup_time'],
-                'note':x['note'],               
-                'name':usersdata['name'],
-                'numberphone':usersdata['numberphone'],
-                'adress':usersdata['adress'],
-                'lat':usersdata['lat'],
-                'lang':usersdata['lang'],
-                'products':getProductList(productList),
-                'ordertime':x['orderTime'],
-                'status':x['status']       
-                }) 
-
-          
-    
         return jsonify(orderStore) 
     
 
@@ -974,15 +955,17 @@ def getShop(storeID):
 
 @app.route('/api/Getorderlist/<string:orderID>',methods=['GET'])
 def GetrateTing(orderID):
-    output=[]
+    output={}
     result = db.orders.find({'_id':ObjectId(orderID)})
     for pro in result:
-        output.append({"orderList": pro['order_products'],"total":pro['total']})
+        output={"orderList": pro['order_products'],"total":pro['total'],"userid":pro['userid'],"status":pro['status']}
     return jsonify(output)
 
 
 
 if __name__ == '__main__':
+    from werkzeug.serving import WSGIRequestHandler
+    WSGIRequestHandler.protocol_version = "HTTP/1.1"
     app.run(debug=True,host="localhost",port=5000)
 
 
