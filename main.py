@@ -19,9 +19,10 @@ app = Flask(__name__)
 CORS(app) 
 
 
+
 #set API send SMS to Device 
 app.config['ACCOUNT_SID']="AC972c43f1b33f1b1fdf504a65febf75a4"
-app.config['AUTH_TOKEN']="b0dfc80f8ed10fc21b12dddb7577e7cd"
+app.config['AUTH_TOKEN']="8362f3acd03acc13db35b8124f9768bc"
 app.config['PHONE_NUMBER']="+13868537656"
 
 
@@ -42,6 +43,9 @@ def allowed_file(filename):
 today = datetime.today()
 day = today.strftime("%d/%m/%Y")
 
+@app.route('/',methods=['GET'])
+def home():
+    return {"message":"hello"}
 
 #Login OTP for users 
 @app.route('/api/LoginOTP',methods=['POST'])
@@ -80,10 +84,10 @@ def Adduser():
         lastname=request.json["lastname"]
         phoneNumber=request.json["numberphone"]
         userType=request.json["User_Type"]
-        if db.Users.find_one({'numberphone':phoneNumber}):
-            return {"messages":"phoneNumber has registered","status":False}
-        else:        
-            result=db.Users.insert_one(
+        #if db.Users.find_one({'numberphone':phoneNumber}):
+            #return {"messages":"phoneNumber has registered","status":False}
+        #else:        
+        result=db.Users.insert_one(
             {"email":email,
             "password":password,
             "name":name,
@@ -91,8 +95,8 @@ def Adduser():
             "numberphone":phoneNumber,
             "User_Type":userType        
             })
-            if result:
-                return {"messages":"Successful registration","status":True,"userid":str(result.inserted_id)}
+        if result:
+            return {"messages":"Successful registration","status":True,"userid":str(result.inserted_id)}
 
 
 
@@ -332,6 +336,7 @@ def getorder(userid):
 @app.route('/api/getorderAction/<string:userid>/<string:status>',methods=['GET'])
 def getorderAction(userid,status):
     orders=[]
+    
     result_orders=db.orders.find({"userid":userid,'status':status}).sort('orderTime',-1)
     storeid=""
     for x in result_orders:
@@ -552,19 +557,19 @@ def updatecontract(userid):
 #get customer  one contract 
 @app.route('/api/getcustomerContact/<string:userid>',methods=['GET'])
 def getContactUser(userid):
-    output=[]
+    output={}
     result=db.customer_contract.find({'userid':userid})
     users=db.Users.find_one({'_id':ObjectId(userid)})
     if result:
         for x in result:
-            output.append({
+            output={
                         'adress':x['adress'],
                         'details':x['details'],
                         'latitude':x['latitude'],
                         'longitude':x['longitude'],
                         'numberphone':users['numberphone'],
                         'name':users['name']+"  "+users['lastname']
-                        })
+                        }
     if output:
         return {"status":True,"message":"getContactUser Success","usercontact": output }       
     else:   
@@ -900,37 +905,38 @@ def Getdisapproved():
 
 
 #อัตเดตสถาน่ะ ร้านค้าเป็นอนุอัติ และส่งแจ้งเตือนไป App mobile 
-@app.route('/api/confirmStore/<string:storeID>',methods=['PUT'])
-def confirmstore(storeID):
-    query={'store_ID':storeID}
-    value={
-        "$set":
-            {'status_confirm':True}
-    }
-    update=db.store.update_one(query,value)
-    if(update):
-         title='แจ้งเตือนผลการลงทะเบียนร้านค้ากับ GoodVendor'
-         body='ร้านของคุณได้รับการอนุมติเรียบร้อยแล้ว'
-         data={'click_action':'FLUTTER_NOTIFICATION_CLICK','confirmStore':'confirm'}
-         response=fcm.sendNotification(storeID,title,body,data)
-         if(response==200):  
-            return {"message":"updated statusconfirm success","status":True}
+@app.route('/api/confirmStore/<string:storeID>/<string:statusShop>',methods=['PUT'])
+def confirmstore(storeID,statusShop):
+    if statusShop=="confirm":
+        query={'store_ID':storeID}
+        value={
+            "$set":
+                {'status_confirm':True}
+        }
+        update=db.store.update_one(query,value)
+        if(update):
+            title='แจ้งเตือนผลการลงทะเบียนร้านค้ากับ GoodVendor'
+            body='ร้านของคุณได้รับการอนุมติเรียบร้อยแล้ว'
+            data={'click_action':'FLUTTER_NOTIFICATION_CLICK','confirmStore':'confirm'}
+            response=fcm.sendNotification(storeID,title,body,data)
+            if(response==200):  
+                return {"message":"updated statusconfirm success","status":True}
 
+    if(statusShop=="disconfirm"):
+        query={'store_ID':storeID}
+        value={
+                    "$set":
+                        {'status_confirm':False}
+                    }
+        update=db.store.update_one(query,value)
+        if(update):
+                    title='แจ้งเตือนผลการลงทะเบียนร้านค้ากับ GoodVendor'
+                    body='ร้านของคุณไม่ได้รับการอนุมติ เนื่องจากข้อมูลยังไม่ครบถ้วน'
+                    data={'click_action':'FLUTTER_NOTIFICATION_CLICK','confirmStore':'confirm'}
+                    response=fcm.sendNotification(storeID,title,body,data)
+                    if(response==200):  
+                        return {"message":"updated statusconfirm success","status":True}
 
-
-@app.route('/api/getcordinate',methods=['GET'])
-def getcoordinate():
-    lat1=request.json["lat1"]
-    lon1=request.json["lon1"]
-    lat2=request.json["lat2"]
-    lon2=request.json["lon2"]
-    p = 0.017453292519943295
-    c = cos
-    a = 0.5 -c((lat2 - lat1) * p) / 2 +c(lat1 * p) * c(lat2 * p) * (1 - c((lon2 - lon1) * p)) / 2
-    answer=12742 * asin(sqrt(a))
-
-    return   {"duration":answer}
-   
 
 
 
@@ -960,6 +966,8 @@ def GetrateTing(orderID):
     for pro in result:
         output={"orderList": pro['order_products'],"total":pro['total'],"userid":pro['userid'],"status":pro['status']}
     return jsonify(output)
+
+
 
 
 
